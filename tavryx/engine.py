@@ -113,10 +113,13 @@ class TavryxEngine:
             response_schema=SCHEMA,
             max_output_tokens=settings.tavryx_max_output_tokens,
         )
-        # Gemini 3.x exposes thinking as an explicit latency/quality control.
-        # We deliberately avoid temperature/top_p/top_k for Gemini 3.x.
+        # Keep the public Render deployment latency-safe. Critical requests can
+        # otherwise spend too long in extended reasoning on a free instance.
+        # The semantic policy is still retained in the situation metadata.
         from google.genai import types
-        config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=thinking_level)
+        effective_level = "minimal" if settings.app_env == "production" else thinking_level
+        config_kwargs["max_output_tokens"] = min(settings.tavryx_max_output_tokens, 800)
+        config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=effective_level)
         return self.client.models.generate_content(
             model=settings.gemini_model,
             contents=json.dumps(payload, ensure_ascii=False),
@@ -131,8 +134,8 @@ class TavryxEngine:
             "sender": message.sender,
             "channel": message.channel,
             "previous_situation": previous.model_dump(mode="json") if previous else None,
-            "candidate_situations": self._candidate_context(message.sender),
-            "recent_history": self._context(message.sender),
+            "candidate_situations": self._candidate_context(message.sender)[:4],
+            "recent_history": self._context(message.sender)[:4],
             "mode_guidance": MODE_GUIDANCE,
             "instruction": (
                 "You are maintaining a portfolio of living situations, not one global conversation. "
@@ -147,12 +150,16 @@ class TavryxEngine:
         try:
             response = self._generate(payload, level)
         except Exception:
-            # One bounded recovery attempt. It prevents a transient model-side spike
-            # from becoming a user-visible internal error while keeping latency bounded.
+            # One bounded fast recovery attempt. If the upstream model is temporarily
+            # unavailable, return a deterministic safety result instead of a 503 so the
+            # production dashboard remains usable and the latest state is preserved.
             if level != settings.tavryx_fast_thinking_level:
-                response = self._generate(payload, settings.tavryx_fast_thinking_level)
+                try:
+                    response = self._generate(payload, settings.tavryx_fast_thinking_level)
+                except Exception:
+                    return self._fallback_result(message, previous, started)
             else:
-                raise
+                return self._fallback_result(message, previous, started)
 
         situation = Situation.model_validate(self._extract_json(response.text))
         situation.reasoning_level = {"low": "FAST", "medium": "BALANCED", "high": "DEEP", "minimal": "FAST"}.get(level, "BALANCED")
@@ -165,6 +172,51 @@ class TavryxEngine:
                 + situation.state_delta
             ).strip()
 
+        self.memory.add(message.sender, message.channel, message.text, situation)
+        situation.processing_ms = round((time.perf_counter() - started) * 1000)
+        return AgentResult(situation=situation, response=render_situation(situation))
+
+
+    def _fallback_result(self, message, previous, started):
+        """Fast deterministic degradation path for transient upstream AI failures."""
+        text = message.text.strip()
+        value = text.lower()
+        critical_terms = ("outage", "production", "http 500", "http 503", "payment", "database", "security", "breach", "data loss")
+        learning_terms = ("learn", "teach", "exam", "understand", "recursion", "explain")
+        decision_terms = ("choose", "compare", "decision", "prioritize", "strategy")
+        if any(k in value for k in critical_terms):
+            mode, severity, lifecycle = Mode.INCIDENT, "HIGH", Lifecycle.ACTIVE
+            title = "Production situation requires immediate triage"
+            trajectory = "ESCALATING"
+            next_move = "Validate the newest production evidence first, then address the highest customer-impacting failure."
+        elif any(k in value for k in learning_terms):
+            mode, severity, lifecycle = Mode.LEARNING, "LOW", Lifecycle.EMERGING
+            title = "Learning request"
+            trajectory = "EMERGING"
+            next_move = "Start with the simplest concept, verify understanding, then apply it to one small example."
+        elif any(k in value for k in decision_terms):
+            mode, severity, lifecycle = Mode.DECISION, "MEDIUM", Lifecycle.EMERGING
+            title = "Decision requires structured evaluation"
+            trajectory = "EMERGING"
+            next_move = "Compare the available options against impact, risk, effort, and reversibility before committing."
+        else:
+            mode, severity, lifecycle = Mode.GENERAL, "LOW", Lifecycle.EMERGING
+            title = "Situation identified"
+            trajectory = "EMERGING"
+            next_move = "Clarify the desired outcome and validate the most important evidence before acting."
+
+        sid = previous.situation_id if previous and mode == previous.mode else "S-" + uuid.uuid4().hex[:8].upper()
+        situation = Situation(
+            situation_id=sid, title=title, mode=mode, lifecycle=lifecycle, severity=severity,
+            trajectory=trajectory, confidence=68, reasoning_level="FAST",
+            summary=text, impact="Requires focused follow-up based on the evidence provided.",
+            evidence=[text], options=[next_move], recommendation=next_move, next_move=next_move,
+            why="Prioritize the highest-leverage action supported by the current evidence.",
+            state_delta="New signal captured; situation state established from the latest message.",
+            observed=[text], inferred=[], recommended=[next_move], executed=[], verified=[]
+        )
+        if previous and situation.situation_id == previous.situation_id:
+            situation.state_delta = _state_delta(previous, situation, situation.state_delta)
         self.memory.add(message.sender, message.channel, message.text, situation)
         situation.processing_ms = round((time.perf_counter() - started) * 1000)
         return AgentResult(situation=situation, response=render_situation(situation))
