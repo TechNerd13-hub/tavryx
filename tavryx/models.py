@@ -29,6 +29,7 @@ class Situation(BaseModel):
     confidence: int = Field(default=70, ge=0, le=100)
     reasoning_level: str = "FAST"
     summary: str = ""
+    answer: str = ""
     impact: str = ""
     evidence: list[str] = Field(default_factory=list)
     options: list[str] = Field(default_factory=list)

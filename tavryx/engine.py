@@ -18,6 +18,7 @@ SCHEMA = {
         "trajectory": {"type": "STRING"},
         "confidence": {"type": "INTEGER"},
         "summary": {"type": "STRING"},
+        "answer": {"type": "STRING"},
         "impact": {"type": "STRING"},
         "evidence": {"type": "ARRAY", "items": {"type": "STRING"}},
         "options": {"type": "ARRAY", "items": {"type": "STRING"}},
@@ -35,7 +36,7 @@ SCHEMA = {
     },
     "required": [
         "situation_id","title","mode","lifecycle","severity","trajectory","confidence",
-        "summary","impact","evidence","options","recommendation","next_move","why",
+        "summary","answer","impact","evidence","options","recommendation","next_move","why",
         "state_delta","decision_revised","revision_reason","observed","inferred",
         "recommended","executed","verified"
     ],
@@ -113,12 +114,13 @@ class TavryxEngine:
             response_schema=SCHEMA,
             max_output_tokens=settings.tavryx_max_output_tokens,
         )
-        # Keep the public Render deployment latency-safe. Critical requests can
-        # otherwise spend too long in extended reasoning on a free instance.
-        # The semantic policy is still retained in the situation metadata.
+        # Production still reasons on every request, but keeps the budget tight.
+        # Simple questions use LOW thinking; complex/critical requests escalate to
+        # the configured higher level. This avoids the old production-only MINIMAL
+        # path that could make TAVRYX feel like it was not actually thinking.
         from google.genai import types
-        effective_level = "minimal" if settings.app_env == "production" else thinking_level
-        config_kwargs["max_output_tokens"] = min(settings.tavryx_max_output_tokens, 800)
+        effective_level = thinking_level
+        config_kwargs["max_output_tokens"] = min(settings.tavryx_max_output_tokens, 900)
         config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=effective_level)
         return self.client.models.generate_content(
             model=settings.gemini_model,
@@ -143,7 +145,7 @@ class TavryxEngine:
                 "If continuing, reuse that candidate's exact situation_id and update its state. "
                 "If unrelated, create a new S-XXXXXXXX id. Never merge unrelated situations merely because they share a mode. "
                 "Treat channel as transport metadata; continuity belongs to the situation and sender. "
-                "Keep the output concise and operational. State what changed, what is known, what is inferred, and the single highest-leverage next move."
+                "Answer the user's actual question directly. Never return only a situation label. For learning questions, provide the useful explanation/formulas/example requested. For general questions, provide a concrete answer before the situation metadata. Keep the output concise but complete. State what changed, what is known, what is inferred, and the single highest-leverage next move."
             ),
         }
         level = self._thinking_level(message.text, previous)
@@ -161,7 +163,10 @@ class TavryxEngine:
             else:
                 return self._fallback_result(message, previous, started)
 
-        situation = Situation.model_validate(self._extract_json(response.text))
+        raw = self._extract_json(response.text)
+        if not raw.get("answer"):
+            raw["answer"] = raw.get("summary", "")
+        situation = Situation.model_validate(raw)
         situation.reasoning_level = {"low": "FAST", "medium": "BALANCED", "high": "DEEP", "minimal": "FAST"}.get(level, "BALANCED")
         situation = self._normalize_identity(previous, situation)
         if previous and situation.situation_id == previous.situation_id:
@@ -209,7 +214,7 @@ class TavryxEngine:
         situation = Situation(
             situation_id=sid, title=title, mode=mode, lifecycle=lifecycle, severity=severity,
             trajectory=trajectory, confidence=68, reasoning_level="FAST",
-            summary=text, impact="Requires focused follow-up based on the evidence provided.",
+            summary=text, answer=next_move, impact="Requires focused follow-up based on the evidence provided.",
             evidence=[text], options=[next_move], recommendation=next_move, next_move=next_move,
             why="Prioritize the highest-leverage action supported by the current evidence.",
             state_delta="New signal captured; situation state established from the latest message.",
@@ -266,7 +271,7 @@ def render_situation(s):
         f"`{s.situation_id}` · **{s.lifecycle.value}** · **{s.reasoning_level}**",
         "",
         f"**{s.title}**",
-        s.summary,
+        (s.answer or s.summary),
         "",
     ]
     if s.state_delta:

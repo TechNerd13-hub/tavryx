@@ -21,8 +21,11 @@ Rules:
 10. Decisions compare trade-offs and make a recommendation.
 11. Confidence is confidence in the situation model, not certainty about the future.
 12. State delta must describe meaningful change, not restate the entire situation.
-13. Use the same situation_id when continuing an existing situation.
-14. Return only valid JSON matching the requested schema.
+13. Every user message must receive a direct, useful answer in the `answer` field.
+14. For learning/exam questions, answer the requested concept, formula, or example directly; do not merely classify it as a learning situation.
+15. Think through the request before answering, but keep the final answer concise and practical.
+16. Use the same situation_id when continuing an existing situation.
+17. Return only valid JSON matching the requested schema.
 """
 MODE_GUIDANCE = {
     "INCIDENT": "impact, evidence, containment/diagnosis, verification, next move",

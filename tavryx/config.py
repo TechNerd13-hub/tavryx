@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     tavryx_candidate_situations: int = Field(default=8, ge=3, le=20)
     tavryx_history_per_situation: int = Field(default=8, ge=3, le=20)
     tavryx_rate_limit_per_minute: int = Field(default=30, ge=5, le=120)
-    tavryx_fast_thinking_level: str = "minimal"
-    tavryx_complex_thinking_level: str = "low"
+    tavryx_fast_thinking_level: str = "low"
+    tavryx_complex_thinking_level: str = "medium"
     tavryx_critical_thinking_level: str = "medium"
     tavryx_api_token: str | None = None
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

@@ -3,227 +3,185 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#f4f1e8">
-<meta name="description" content="TAVRYX AI — living situation intelligence console">
-<title>TAVRYX AI — Situation Intelligence</title>
+<title>TAVRYX — Signal Intelligence</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
-
 :root{
- --bg:#f4f1e8;--paper:#fffdf7;--ink:#11130f;--muted:#77786f;--line:#d7d4ca;
- --blue:#3158ff;--lime:#c6f34b;--coral:#ff7059;--violet:#7d68ff;
- --shadow:0 18px 50px rgba(17,19,15,.08);--radius:20px
+  --paper:#f4f1e8; --ink:#11120f; --muted:#6e7068; --line:#c9c6bb;
+  --blue:#315cff; --lime:#b7e83d; --coral:#ff715b; --panel:#faf8f1;
 }
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.45;background-image:linear-gradient(rgba(17,19,15,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(17,19,15,.035) 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(#000,transparent 88%)}
-button,textarea{font:inherit}
-button{appearance:none}
-.shell{position:relative;z-index:1;max-width:1500px;margin:auto;padding:18px 20px 28px}
-
-/* Top identity rail */
-.top{height:62px;border-bottom:1px solid var(--ink);display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.07em;font-size:23px}
-.brand-mark{width:30px;height:30px;border:1px solid var(--ink);border-radius:9px;display:grid;place-items:center;background:var(--ink);color:var(--lime);font:500 12px "DM Mono",monospace;transform:rotate(-6deg)}
-.brand small{font:500 8px "DM Mono",monospace;letter-spacing:.16em;color:var(--muted);border-left:1px solid var(--line);padding-left:11px}
-.status{display:flex;align-items:center;gap:8px;border:1px solid var(--ink);padding:7px 10px;border-radius:999px;background:var(--paper);font:500 9px "DM Mono",monospace}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 4px rgba(198,243,75,.3);border:1px solid var(--ink)}
-
-/* Intro / command deck */
-.intro{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;padding-top:14px}
-.hero,.telemetry,.workspace,.history,.rail-card{background:rgba(255,253,247,.84);border:1px solid var(--ink);border-radius:var(--radius);box-shadow:var(--shadow)}
-.hero{min-height:330px;padding:27px;position:relative;overflow:hidden}
-.hero:after{content:"";position:absolute;width:420px;height:420px;border:1px solid var(--line);border-radius:50%;right:-190px;top:-220px;box-shadow:0 0 0 35px rgba(49,88,255,.025),0 0 0 70px rgba(49,88,255,.02),0 0 0 105px rgba(49,88,255,.015)}
-.kicker{text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font:500 9px "DM Mono",monospace}
-.hero h1{font-size:clamp(54px,7vw,108px);line-height:.82;letter-spacing:-.1em;margin:22px 0 17px;max-width:920px}
-.hero h1 span{display:block}
-.hero h1 em{font-style:normal;color:var(--blue)}
-.hero p{max-width:650px;color:#5c5d56;font-size:13px;line-height:1.7;margin:0}
-.signature{position:absolute;bottom:22px;right:26px;font:500 8px "DM Mono",monospace;color:var(--muted);letter-spacing:.1em}
-
-.telemetry{padding:18px;display:flex;flex-direction:column;min-height:330px}
-.telemetry-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:12px}
-.radar-orbit{flex:1;position:relative;display:grid;place-items:center;min-height:220px}
-.orbit{position:absolute;border:1px solid var(--line);border-radius:50%;width:175px;height:175px}
-.orbit.o2{width:125px;height:125px;border-color:#c4c1b8}.orbit.o3{width:75px;height:75px;border-color:#aaa79e}
-.core{width:44px;height:44px;border-radius:50%;background:var(--ink);border:2px solid var(--lime);box-shadow:0 0 0 9px rgba(198,243,75,.14),0 0 45px rgba(49,88,255,.13);z-index:2}
-.signal{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--blue);border:1px solid var(--ink)}
-.s1{transform:translate(68px,-52px)}.s2{transform:translate(-63px,31px);background:var(--coral)}.s3{transform:translate(33px,68px);background:var(--lime)}
-.orbit-label{position:absolute;top:10px;left:12px;font:500 8px "DM Mono",monospace;color:var(--muted)}
-.telemetry-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.metric{border-top:1px solid var(--ink);padding:9px 2px 2px}.metric label{display:block;text-transform:uppercase;color:var(--muted);font:500 7px "DM Mono",monospace;letter-spacing:.12em}.metric b{display:block;margin-top:4px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* Workbench */
-.workbench{display:grid;grid-template-columns:.82fr 1.18fr;gap:14px;margin-top:14px}
-.workspace,.output-card{padding:20px}
-.input-wrap{position:relative;margin-top:11px}
-.input{width:100%;min-height:190px;resize:vertical;border:1px solid var(--ink);border-radius:15px;background:#fbfaf4;color:var(--ink);padding:16px;outline:none;font-size:13px;line-height:1.65;transition:.22s cubic-bezier(.16,1,.3,1)}
-.input:focus{background:#fff;box-shadow:6px 6px 0 var(--lime);transform:translate(-2px,-2px)}
-.input::placeholder{color:#999a92}
-.char{position:absolute;right:10px;bottom:9px;color:#a0a097;font:500 7px "DM Mono",monospace}
-
-.actions{display:grid;grid-template-columns:1.5fr repeat(5,1fr);gap:6px;margin-top:9px}
-.btn{border:1px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:10px;padding:10px 8px;font-size:9px;font-weight:800;cursor:pointer;transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s,background .2s}
-.btn:hover{transform:translateY(-2px);box-shadow:3px 3px 0 var(--ink)}
-.btn.primary{background:var(--ink);color:white;box-shadow:4px 4px 0 var(--blue)}
-.btn.primary:hover{box-shadow:4px 4px 0 var(--lime)}
-.btn:disabled{opacity:.55;cursor:wait;transform:none;box-shadow:none}
-.command-note{margin-top:9px;color:var(--muted);font:500 8px "DM Mono",monospace}
-
-.output-card{min-height:290px}
-.output-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:11px}
-.live-label{display:flex;gap:7px;align-items:center;font:500 8px "DM Mono",monospace;color:var(--muted)}
-.live-label i{width:6px;height:6px;background:var(--coral);border-radius:50%}
-.output{margin-top:12px;min-height:220px;max-height:390px;overflow:auto;white-space:pre-wrap;background:#12140f;color:#f4f1e8;border-radius:15px;padding:18px;font:400 11px/1.75 "DM Mono",monospace;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
-.output::-webkit-scrollbar,.radar-list::-webkit-scrollbar{width:6px}.output::-webkit-scrollbar-thumb,.radar-list::-webkit-scrollbar-thumb{background:#55584f;border-radius:99px}
-
-/* Lower intelligence area */
-.lower{display:grid;grid-template-columns:1.25fr .75fr;gap:14px;margin-top:14px}
-.history{padding:19px}
-.history-head{display:flex;justify-content:space-between;align-items:center}
-.timeline-list{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:13px}
-.event{border:1px solid var(--line);background:#fffefa;border-radius:12px;padding:12px;min-height:105px;position:relative;overflow:hidden}
-.event:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue)}
-.event small{font:500 7px "DM Mono",monospace;color:var(--muted)}.event strong{display:block;font-size:11px;margin:6px 0}.event p{font-size:10px;color:#66675f;margin:0;line-height:1.5}
-.rail-card{padding:19px}.rail-card h2{font-size:28px;letter-spacing:-.06em;margin:10px 0}.rail-card p{font-size:11px;color:#66675f;line-height:1.65}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}.chip{border:1px solid var(--ink);border-radius:999px;padding:6px 8px;font:500 7px "DM Mono",monospace;background:var(--paper)}
-.radar-list{display:grid;gap:7px;margin-top:10px;max-height:215px;overflow:auto}.radar-item{border:1px solid var(--line);border-radius:11px;padding:10px;background:#fff;cursor:pointer;transition:.2s}.radar-item:hover,.radar-item:focus{border-color:var(--ink);box-shadow:3px 3px 0 var(--violet);transform:translate(-1px,-1px);outline:none}.radar-row{display:flex;justify-content:space-between;gap:8px}.pill{font:500 7px "DM Mono",monospace;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 6px}.radar-item strong{display:block;margin:6px 0 2px;font-size:11px}.radar-item p{margin:0;color:var(--muted);font-size:9px;line-height:1.45}
-.foot{padding:16px 2px 3px;display:flex;justify-content:space-between;gap:10px;color:var(--muted);font:500 7px "DM Mono",monospace;text-transform:uppercase;letter-spacing:.06em}
-.btn.refresh{padding:7px 9px}
-
-@media(max-width:1050px){.intro,.workbench,.lower{grid-template-columns:1fr}.hero{min-height:310px}.actions{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:650px){.shell{padding:12px}.top{height:55px}.brand small{display:none}.hero,.workspace,.output-card,.history,.rail-card{padding:15px}.hero h1{font-size:58px}.telemetry-grid{grid-template-columns:1fr 1fr}.timeline-list{grid-template-columns:1fr}.actions{grid-template-columns:1fr 1fr}.actions .primary{grid-column:1/-1}.foot{flex-direction:column}.signature{display:none}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:#f2efe7;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}
+body:after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 78% 12%,rgba(49,92,255,.10),transparent 24%),radial-gradient(circle at 8% 82%,rgba(183,232,61,.10),transparent 22%);z-index:-2}
+::selection{background:var(--blue);color:#fff}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.23;background-image:radial-gradient(#111 0.45px,transparent .45px);background-size:7px 7px}
+.app{max-width:1500px;margin:auto;padding:28px}
+.top{display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid var(--ink);padding:8px 0 18px}
+.brand{display:flex;align-items:center;gap:14px}.mark{width:34px;height:34px;border:2px solid var(--ink);border-radius:50%;position:relative}
+.mark:after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:var(--blue);left:10px;top:10px}
+.brand b{font-size:22px;letter-spacing:.14em}.brand span{font:11px ui-monospace,monospace;letter-spacing:.16em;color:var(--muted)}
+.status{border:1.5px solid var(--ink);border-radius:99px;padding:9px 14px;font:12px ui-monospace,monospace;display:flex;gap:8px;align-items:center}
+.status i{width:8px;height:8px;background:var(--lime);border-radius:50%;display:block}
+.hero{display:grid;grid-template-columns:1.45fr .8fr;gap:14px;margin-top:14px}
+.card{background:rgba(250,248,241,.82);border:1.5px solid rgba(17,18,15,.88);border-radius:28px;padding:28px;box-shadow:6px 7px 0 rgba(17,18,15,.055);backdrop-filter:blur(12px);transition:transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s}
+.card:hover{transform:translateY(-3px);box-shadow:8px 11px 0 rgba(17,18,15,.07)}
+.kicker{font:11px ui-monospace,monospace;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+h1{font-size:clamp(58px,8vw,132px);line-height:.79;letter-spacing:-.082em;margin:42px 0 25px;max-width:900px;font-weight:800}
+h1:after{content:"";display:inline-block;width:clamp(12px,1.2vw,20px);height:clamp(12px,1.2vw,20px);margin-left:12px;background:var(--coral);border-radius:50%;vertical-align:15%}
+h1 em{font-style:normal;color:var(--blue)}
+.lead{font-size:18px;line-height:1.55;max-width:760px;color:#565850}
+.orbit{min-height:390px;position:relative;overflow:hidden;background:linear-gradient(145deg,#faf8f1 0%,#efeee6 100%)}
+.orbit:before{content:"";position:absolute;width:190px;height:190px;right:-55px;top:-65px;border:1px solid rgba(49,92,255,.22);border-radius:50%;box-shadow:0 0 0 34px rgba(49,92,255,.035),0 0 0 70px rgba(49,92,255,.025)}
+.orbit .rings{position:absolute;width:330px;height:330px;left:50%;top:45%;transform:translate(-50%,-50%)}
+.ring{position:absolute;border:1px solid rgba(110,112,104,.38);border-radius:50%;inset:0;animation:orbitPulse 7s ease-in-out infinite}
+.r2{animation-delay:-1.4s}.r3{animation-delay:-2.8s}.r4{animation-delay:-4.2s}
+@keyframes orbitPulse{50%{transform:scale(1.018);opacity:.72}}
+.r2{inset:40px}.r3{inset:80px}.r4{inset:120px}
+.core{position:absolute;left:50%;top:50%;width:52px;height:52px;transform:translate(-50%,-50%);background:var(--ink);border-radius:50%;box-shadow:0 0 0 9px #edf2d8,0 0 0 11px var(--lime),0 0 38px rgba(183,232,61,.28);animation:corePulse 3.5s ease-in-out infinite}
+@keyframes corePulse{50%{box-shadow:0 0 0 12px #edf2d8,0 0 0 14px var(--lime),0 0 52px rgba(183,232,61,.38)}}
+.dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--blue);left:72%;top:17%;box-shadow:0 0 0 5px rgba(49,92,255,.08);animation:floatDot 4s ease-in-out infinite}
+@keyframes floatDot{50%{transform:translate(-7px,10px)}}
+.dot2{background:var(--coral);left:16%;top:64%}.dot3{background:var(--lime);left:62%;top:76%}
+.metrics{position:absolute;left:28px;right:28px;bottom:25px;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--ink);padding-top:13px}
+.metric label{display:block;font:9px ui-monospace,monospace;color:var(--muted);letter-spacing:.12em}.metric b{display:block;margin-top:8px;font:16px ui-monospace,monospace}
+.workspace{display:grid;grid-template-columns:.82fr 1.18fr;gap:14px;margin-top:14px;align-items:stretch}
+.workspace .signal{position:relative}
+.workspace .signal:before{content:"";position:absolute;left:-1px;top:34px;bottom:34px;width:3px;background:linear-gradient(var(--blue),transparent);border-radius:99px}
+.signal textarea{width:100%;min-height:210px;resize:vertical;border:1.5px solid var(--ink);border-radius:18px;background:rgba(255,253,246,.92);padding:20px;font:16px/1.5 inherit;outline:none;transition:box-shadow .2s,transform .2s}
+.signal textarea::placeholder{color:#999a92}.signal textarea:focus{transform:translateY(-1px)}
+.signal textarea:focus{box-shadow:4px 4px 0 var(--blue)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{border:1.5px solid var(--ink);background:rgba(255,255,255,.25);color:var(--ink);border-radius:999px;padding:11px 15px;font-weight:750;cursor:pointer;transition:.22s transform,.22s background,.22s color,.22s box-shadow}
+button:hover{transform:translateY(-2px);background:var(--ink);color:#fff;box-shadow:3px 4px 0 rgba(17,18,15,.12)}
+button:hover{transform:translateY(-2px);background:var(--ink);color:#fff}
+button.primary{background:var(--ink);color:#fff;padding-inline:20px}
+button.primary:hover{background:var(--blue)}
+.output{min-height:315px;background:#10110e;color:#f8f7f0;border-radius:22px;padding:25px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.output:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(49,92,255,.10),transparent 40%,rgba(183,232,61,.06));pointer-events:none}
+.output:after{content:"";position:absolute;right:-70px;bottom:-100px;width:260px;height:260px;border:1px solid #444;border-radius:50%;box-shadow:0 0 0 30px #25261f,0 0 0 60px #1d1e19}
+.output h3{margin:18px 0 12px;font-size:25px;letter-spacing:-.04em;position:relative;z-index:1}.output p,.output pre{position:relative;z-index:1;color:#c9c9c0;line-height:1.65;white-space:pre-wrap}
+.live{display:flex;justify-content:space-between;align-items:center;font:10px ui-monospace,monospace;letter-spacing:.14em;color:#a9aa9f}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--coral);display:inline-block;box-shadow:0 0 0 5px rgba(255,113,91,.12)}
+.evolution{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.timeline{display:flex;gap:18px;align-items:stretch;margin-top:18px}
+.step{flex:1;border-top:1.5px solid var(--ink);padding-top:12px}.step strong{font:11px ui-monospace,monospace}.step p{color:var(--muted);font-size:13px}
+.command-strip{margin-top:14px;display:flex;justify-content:space-between;align-items:center}
+.command-strip strong{display:block;margin-top:8px;font-size:20px;letter-spacing:-.025em}
+.command-hint{font:11px ui-monospace,monospace;color:var(--muted);display:flex;gap:8px;align-items:center}
+.command-hint span{border:1px solid var(--line);border-radius:7px;padding:5px 7px;background:#fffdf6;color:var(--ink)}
+.footer{padding:28px 4px 8px;display:flex;justify-content:space-between;color:var(--muted);font:10px ui-monospace,monospace;letter-spacing:.08em}
+@media(max-width:900px){.hero,.workspace,.evolution{grid-template-columns:1fr}.orbit{min-height:330px}h1{font-size:64px}.metrics{grid-template-columns:repeat(2,1fr);gap:12px}.app{padding:14px}.command-strip{align-items:flex-start;gap:20px;flex-direction:column}}
+@media(max-width:560px){.top{align-items:flex-start;gap:12px}.brand{flex-wrap:wrap}.brand span{width:100%}.status{font-size:10px}.card{padding:20px;border-radius:22px}h1{font-size:55px}.lead{font-size:15px}.actions button{flex:1 1 auto}.metrics{left:20px;right:20px}.orbit{min-height:310px}}
 </style>
 </head>
 <body>
-<main class="shell">
+<div class="app">
 <header class="top">
-  <div class="brand"><span class="brand-mark">TX</span><span>TAVRYX</span><small>AI · SITUATION INTELLIGENCE</small></div>
-  <div class="status"><i class="dot"></i><span id="health">checking system</span></div>
+  <div class="brand"><div class="mark"></div><b>TAVRYX</b><span>SITUATION INTELLIGENCE</span></div>
+  <div class="status"><i></i><span id="statusText">LIVE · ADAPTIVE</span></div>
 </header>
 
-<section class="intro">
-  <article class="hero">
-    <div>
-      <div class="kicker">01 / Living intelligence console</div>
-      <h1><span>Understand</span><span>what <em>changed.</em></span></h1>
-      <p>TAVRYX turns incoming signals into living situations. It tracks state deltas, decision evolution and trajectory so the next answer starts from the situation — not from zero.</p>
-    </div>
-    <div class="signature">SIGNAL → SITUATION → DECISION → EVOLUTION</div>
+<section class="hero">
+  <article class="card">
+    <div class="kicker">01 / Living intelligence</div>
+    <h1>Understand<br>what <em>changed.</em></h1>
+    <p class="lead">TAVRYX turns a raw signal into a living situation. Instead of answering every prompt from zero, it frames the state, exposes the change, and lets the decision evolve with new evidence.</p>
   </article>
-
-  <aside class="telemetry">
-    <div class="telemetry-head"><span class="kicker">Situation radar</span><span class="pill" id="count">0 threads</span></div>
-    <div class="radar-orbit">
-      <span class="orbit o1"></span><span class="orbit o2"></span><span class="orbit o3"></span>
-      <span class="core"></span><i class="signal s1"></i><i class="signal s2"></i><i class="signal s3"></i>
-      <span class="orbit-label">LIVE STATE FIELD</span>
+  <article class="card orbit">
+    <div class="kicker">Live state field</div>
+    <div class="rings"><div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="ring r4"></div><div class="core"></div><i class="dot"></i><i class="dot dot2"></i><i class="dot dot3"></i></div>
+    <div class="metrics">
+      <div class="metric"><label>MODE</label><b id="mode">—</b></div>
+      <div class="metric"><label>LIFECYCLE</label><b id="life">—</b></div>
+      <div class="metric"><label>TRAJECTORY</label><b id="trajectory">—</b></div>
+      <div class="metric"><label>CONFIDENCE</label><b id="confidence">—</b></div>
     </div>
-    <div class="telemetry-grid">
-      <div class="metric"><label>Mode</label><b id="mode">—</b></div>
-      <div class="metric"><label>Lifecycle</label><b id="lifecycle">—</b></div>
-      <div class="metric"><label>Trajectory</label><b id="trajectory">—</b></div>
-      <div class="metric"><label>Confidence</label><b id="confidence">—</b></div>
-    </div>
-  </aside>
+  </article>
 </section>
 
-<section class="workbench">
-  <article class="workspace">
+<section class="workspace">
+  <article class="card signal">
     <div class="kicker">02 / Inject a signal</div>
-    <div class="input-wrap">
-      <textarea id="input" class="input" aria-label="Situation message" placeholder="Example: The payment API is returning HTTP 500s again, but the rollback reduced errors by 80%. What changed?"></textarea>
-      <span class="char" id="char">0 / 4000</span>
-    </div>
+    <textarea id="input" placeholder="Describe the situation. TAVRYX will reason over the signal and return a decision-oriented view."></textarea>
     <div class="actions">
-      <button class="btn primary" id="analyze" onclick="analyze()">Analyze situation</button>
-      <button class="btn" onclick="command('focus')">Focus</button>
-      <button class="btn" onclick="command('brief')">Brief</button>
-      <button class="btn" onclick="command('why')">Why</button>
-      <button class="btn" onclick="command('timeline')">Timeline</button>
-      <button class="btn" onclick="command('state')">State</button>
+      <button class="primary" onclick="run('analyze')">Analyze situation</button>
+      <button onclick="run('focus')">Focus</button>
+      <button onclick="run('brief')">Brief</button>
+      <button onclick="run('why')">Why</button>
+      <button onclick="run('timeline')">Timeline</button>
+      <button onclick="run('state')">State</button>
     </div>
-    <div class="command-note">Each control interrogates the same living situation from a different angle · ⌘↵ to analyze</div>
+    <div class="kicker" style="margin-top:14px">Every control interrogates the same situation from a different angle.</div>
   </article>
 
-  <article class="output-card">
-    <div class="output-head"><span class="kicker">03 / Adaptive output</span><span class="live-label"><i></i> LIVE RESPONSE</span></div>
-    <div id="output" class="output">Waiting for a signal.</div>
+  <article class="card">
+    <div class="kicker">03 / Adaptive output</div>
+    <div class="output">
+      <div class="live"><span><span class="pulse"></span> LIVE RESPONSE</span><span id="latency">READY</span></div>
+      <h3 id="outTitle">Waiting for a signal.</h3>
+      <p id="outText">Give TAVRYX a situation. The interface is intentionally quiet until there is something worth reasoning about.</p>
+      <pre id="outMeta"></pre>
+    </div>
   </article>
 </section>
 
-<section class="lower">
-  <article class="history">
-    <div class="history-head"><span class="kicker">04 / Recent evolution</span><button class="btn refresh" onclick="refresh()">Refresh</button></div>
-    <div id="timeline" class="timeline-list"><div style="color:var(--muted);font-size:10px">No events yet.</div></div>
+<section class="evolution">
+  <article class="card">
+    <div class="kicker">04 / Decision evolution</div>
+    <div class="timeline">
+      <div class="step"><strong>01 · SIGNAL</strong><p id="s1">Incoming evidence.</p></div>
+      <div class="step"><strong>02 · SITUATION</strong><p id="s2">Context assembled.</p></div>
+      <div class="step"><strong>03 · DECISION</strong><p id="s3">Priority selected.</p></div>
+      <div class="step"><strong>04 · EVOLUTION</strong><p id="s4">Next change tracked.</p></div>
+    </div>
   </article>
-
-  <aside class="rail-card">
-    <div class="kicker">05 / Active situation radar</div>
-    <h2>Stay ahead<br>of the state.</h2>
-    <p>Click any live thread to load its current situation into the response console. TAVRYX keeps the decision context attached to the situation.</p>
-    <div class="chips"><span class="chip">Living state</span><span class="chip">Decision evolution</span><span class="chip">Evidence</span><span class="chip">Adaptive reasoning</span></div>
-    <div id="radar" class="radar-list"><div style="color:var(--muted);font-size:10px">No situations yet.</div></div>
-  </aside>
+  <article class="card">
+    <div class="kicker">05 / Active situation</div>
+    <h2 style="font-size:40px;line-height:.95;letter-spacing:-.05em;margin:22px 0 12px">Stay ahead<br>of the state.</h2>
+    <p style="color:var(--muted);line-height:1.6">The visual system deliberately treats the situation as the primary object — not the chatbot conversation.</p>
+  </article>
 </section>
 
-<footer class="foot"><span>TAVRYX AI · production situation intelligence</span><span>Caspian communication layer · Gemini reasoning layer</span></footer>
-</main>
+<section class="card command-strip">
+  <div><div class="kicker">06 / System promise</div><strong>One signal. Multiple lenses. One evolving state.</strong></div>
+  <div class="command-hint"><span>⌘</span> Analyze <span>↵</span></div>
+</section>
+
+<footer class="footer"><span>TAVRYX · ORIGINAL INTERFACE CONCEPT</span><span>AI · STATE · DECISION · EVOLUTION</span></footer>
+</div>
 
 <script>
 const $=id=>document.getElementById(id);
-function setOutput(t){$('output').textContent=t||'No response.'}
-async function getJSON(url,opts){const r=await fetch(url,opts);const d=await r.json();if(!r.ok)throw new Error(d.detail||'Request failed');return d}
-async function refresh(){
+async function run(mode){
+  const text=$('input').value.trim();
+  if(!text){ $('outTitle').textContent='A signal is required.'; $('outText').textContent='Describe the situation first.'; return; }
+  $('statusText').textContent='THINKING · '+mode.toUpperCase();
+  $('latency').textContent='PROCESSING';
+  $('outTitle').textContent='TAVRYX · REASONING';
+  $('outText').textContent='Interpreting signal, context, state and decision pressure…';
+  const started=performance.now();
   try{
-    const [h,r,s,m]=await Promise.all([getJSON('/health'),getJSON('/api/radar'),getJSON('/api/state'),getJSON('/api/memory')]);
-    $('health').textContent=h.status==='ok'?`online · ${h.model}`:'degraded';
-    $('count').textContent=`${r.items.length} threads`;
-    if(s.situation){const x=s.situation;$('mode').textContent=x.mode;$('lifecycle').textContent=x.lifecycle;$('trajectory').textContent=x.trajectory;$('confidence').textContent=x.confidence+'%'}
-    renderRadar(r.items);renderTimeline(m.items)
-  }catch(e){$('health').textContent='offline';console.error(e)}
-}
-function renderRadar(items){
-  $('radar').innerHTML=items.length?items.map(s=>`<article class="radar-item" tabindex="0" onclick="loadSituation('${s.situation_id}')" onkeydown="if(event.key==='Enter')loadSituation('${s.situation_id}')"><div class="radar-row"><span class="pill">${s.mode}</span><span class="pill">${s.severity}</span></div><strong>${esc(s.title)}</strong><p>${esc(s.summary)}</p></article>`).join(''):'<div style="color:var(--muted);font-size:10px">No situations yet.</div>'
-}
-function renderTimeline(items){
-  $('timeline').innerHTML=items.slice(0,6).map(r=>{const s=JSON.parse(r.situation_json);return `<article class="event"><small>${esc(r.channel)} · ${new Date(r.created_at).toLocaleTimeString()}</small><strong>${esc(s.title)}</strong><p>${esc(s.state_delta||s.summary||'Signal received')}</p></article>`}).join('')||'<div style="color:var(--muted);font-size:10px">No events yet.</div>'
-}
-async function loadSituation(id){
-  try{const d=await getJSON('/api/situations/'+encodeURIComponent(id));const s=d.situation;setOutput(`TAVRYX · ${s.severity} · ${s.mode}\n\n${s.title}\n\n${s.summary}\n\nSTATE DELTA\n${s.state_delta||'—'}\n\nNEXT MOVE\n${s.next_move||'—'}\n\nCONFIDENCE\n${s.confidence}%`)}
-  catch(e){setOutput(e.message)}
-}
-async function analyze(){
-  const text=$('input').value.trim();if(!text)return;
-  const b=$('analyze');b.disabled=true;b.textContent='Mapping situation…';
-  setOutput('TAVRYX is mapping the signal and checking existing situation threads…');
-  try{
-    const d=await getJSON('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sender:'dashboard',channel:'web'})});
-    setOutput(d.response);$('input').value='';$('char').textContent='0 / 4000';await refresh()
-  }catch(e){setOutput('TAVRYX · RECOVERING\n\n'+e.message)}
-  finally{b.disabled=false;b.textContent='Analyze situation'}
-}
-async function command(c){
-  const labels={focus:'Focusing the situation…',brief:'Preparing the brief…',why:'Tracing the reasoning…',timeline:'Reconstructing the timeline…',state:'Reading current state…'};
-  const b=[...document.querySelectorAll('.actions .btn')].find(x=>x.textContent.trim().toLowerCase()===c);
-  if(b){b.disabled=true;b.textContent=labels[c]||'Working…'}
-  setOutput(`TAVRYX · ${labels[c]||'Working…'}\n\nReading the latest situation state…`);
-  try{
-    const d=await getJSON('/api/command/'+encodeURIComponent(c),{method:'POST'});
-    setOutput(d.response||'No response returned.');
-    await refresh();
+    const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,mode})});
+    const data=await r.json();
+    const answer=data.answer||data.response||data.output||data.message||JSON.stringify(data);
+    $('outTitle').textContent='TAVRYX · '+mode.toUpperCase();
+    $('outText').textContent=answer;
+    $('outMeta').textContent=data.situation?JSON.stringify(data.situation,null,2):'';
+    const st=data.state||data;
+    $('mode').textContent=st.mode||mode.toUpperCase();
+    $('life').textContent=st.lifecycle||'ACTIVE';
+    $('trajectory').textContent=st.trajectory||'EVOLVING';
+    $('confidence').textContent=st.confidence||'—';
+    $('s2').textContent='Situation context updated.';
+    $('s3').textContent='Decision view: '+mode+'.';
+    $('s4').textContent='Evidence remains live.';
   }catch(e){
-    setOutput(`TAVRYX · ${e.message}`);
+    $('outTitle').textContent='TAVRYX · RECOVERING';
+    $('outText').textContent='The intelligence layer could not process this signal right now. Check the API and retry.';
   }finally{
-    if(b){b.disabled=false;b.textContent=c[0].toUpperCase()+c.slice(1)}
+    $('latency').textContent=Math.round(performance.now()-started)+' MS';
+    $('statusText').textContent='LIVE · ADAPTIVE';
   }
 }
-function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-$('input').addEventListener('input',e=>{$('char').textContent=`${e.target.value.length} / 4000`});
-$('input').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze()});
-refresh();setInterval(refresh,15000);
 </script>
 </body>
 </html>
