@@ -71,6 +71,22 @@ button.primary:hover{background:var(--blue)}
 .footer{padding:28px 4px 8px;display:flex;justify-content:space-between;color:var(--muted);font:10px ui-monospace,monospace;letter-spacing:.08em}
 @media(max-width:900px){.hero,.workspace,.evolution{grid-template-columns:1fr}.orbit{min-height:330px}h1{font-size:64px}.metrics{grid-template-columns:repeat(2,1fr);gap:12px}.app{padding:14px}.command-strip{align-items:flex-start;gap:20px;flex-direction:column}}
 @media(max-width:560px){.top{align-items:flex-start;gap:12px}.brand{flex-wrap:wrap}.brand span{width:100%}.status{font-size:10px}.card{padding:20px;border-radius:22px}h1{font-size:55px}.lead{font-size:15px}.actions button{flex:1 1 auto}.metrics{left:20px;right:20px}.orbit{min-height:310px}}
+
+.history-section{margin-top:14px;display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+.history-card{min-height:230px}
+.history-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.history-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.history-item{border:1px solid var(--line);border-radius:18px;background:rgba(255,253,246,.72);padding:16px;min-height:125px;transition:.25s transform,.25s box-shadow}
+.history-item:hover{transform:translateY(-2px);box-shadow:4px 5px 0 rgba(17,18,15,.06)}
+.history-item .history-time{font:9px ui-monospace,monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.history-item h4{margin:0 0 7px;font-size:15px;letter-spacing:-.02em}
+.history-item p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.history-empty{color:var(--muted);font-size:13px;padding:18px 0}
+.radar-copy h2{font-size:40px;line-height:.95;letter-spacing:-.05em;margin:22px 0 12px}
+.radar-copy p{color:var(--muted);line-height:1.6}
+.radar-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.radar-tags span{border:1px solid var(--ink);border-radius:999px;padding:8px 11px;font:10px ui-monospace,monospace}
+@media(max-width:900px){.history-section{grid-template-columns:1fr}.history-list{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -141,6 +157,24 @@ button.primary:hover{background:var(--blue)}
   </article>
 </section>
 
+<section class="history-section">
+  <article class="card history-card">
+    <div class="history-head">
+      <div class="kicker">05 / Recent evolution</div>
+      <button onclick="loadHistory()">Refresh</button>
+    </div>
+    <div id="historyList" class="history-list">
+      <div class="history-empty">No evolution events yet. Analyze a situation to create the first state change.</div>
+    </div>
+  </article>
+  <article class="card radar-copy">
+    <div class="kicker">06 / Active situation radar</div>
+    <h2>Stay ahead<br>of the state.</h2>
+    <p>Click any recent thread to load its current situation into the response console. TAVRYX keeps the decision context attached to the situation.</p>
+    <div class="radar-tags"><span>Living state</span><span>Decision evolution</span><span>Evidence</span><span>Adaptive reasoning</span></div>
+  </article>
+</section>
+
 <section class="card command-strip">
   <div><div class="kicker">06 / System promise</div><strong>One signal. Multiple lenses. One evolving state.</strong></div>
   <div class="command-hint"><span>⌘</span> Analyze <span>↵</span></div>
@@ -173,6 +207,67 @@ function cleanAnswer(value){
 
 function firstDefined(...values){
   return values.find(v=>v!==undefined && v!==null && v!=='');
+}
+
+function historyItemsFrom(data){
+  if(Array.isArray(data)) return data;
+  if(Array.isArray(data?.items)) return data.items;
+  if(Array.isArray(data?.events)) return data.events;
+  if(Array.isArray(data?.history)) return data.history;
+  if(Array.isArray(data?.recent)) return data.recent;
+  return [];
+}
+
+function renderHistory(items){
+  const list=$('historyList');
+  if(!items.length){
+    list.innerHTML='<div class="history-empty">No evolution events yet. Analyze a situation to create the first state change.</div>';
+    return;
+  }
+  list.innerHTML=items.slice(0,6).map((item,i)=>{
+    const title=firstDefined(item?.title,item?.name,item?.situation_title,item?.summary,'Situation update');
+    const detail=firstDefined(item?.description,item?.message,item?.summary,item?.answer,item?.state_delta,'State changed and decision context updated.');
+    const time=firstDefined(item?.created_at,item?.updated_at,item?.timestamp,item?.time,'Recent');
+    const id=item?.situation_id||item?.id||'';
+    return `<button class="history-item" style="text-align:left;width:100%;border-width:1px" onclick="loadHistoryItem(${JSON.stringify(id)})"><div class="history-time">${escapeHtml(formatHistoryTime(time))}</div><h4>${escapeHtml(title)}</h4><p>${escapeHtml(cleanAnswer(detail).slice(0,180))}</p></button>`;
+  }).join('');
+}
+
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+
+function formatHistoryTime(value){
+  if(!value) return 'Recent';
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString([], {month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+async function loadHistory(){
+  try{
+    const r=await fetch('/api/memory',{cache:'no-store'});
+    if(!r.ok) throw new Error('memory unavailable');
+    const data=await r.json();
+    renderHistory(historyItemsFrom(data));
+  }catch(e){
+    // Keep the section useful even when the history endpoint is unavailable.
+    const saved=JSON.parse(localStorage.getItem('tavryx_history')||'[]');
+    renderHistory(saved);
+  }
+}
+
+async function loadHistoryItem(id){
+  if(!id) return;
+  try{
+    const r=await fetch('/api/state',{cache:'no-store'});
+    if(r.ok){
+      const data=await r.json();
+      const situation=data?.situation||data?.active_situation||data;
+      const text=firstDefined(situation?.answer,situation?.summary,situation?.description);
+      if(text){ $('outTitle').textContent='TAVRYX · HISTORY'; $('outText').textContent=cleanAnswer(text); }
+    }
+  }catch(e){}
 }
 
 async function run(mode){
@@ -226,6 +321,17 @@ async function run(mode){
     $('s2').textContent='Situation context updated.';
     $('s3').textContent='Decision view: '+mode+'.';
     $('s4').textContent='Evidence remains live.';
+
+    const localHistory=JSON.parse(localStorage.getItem('tavryx_history')||'[]');
+    localHistory.unshift({
+      id:situation?.situation_id||situation?.id||Date.now(),
+      title:firstDefined(situation?.title,'Situation update'),
+      summary:firstDefined(situation?.summary,answer),
+      state_delta:firstDefined(situation?.state_delta,'Decision context updated.'),
+      created_at:firstDefined(situation?.created_at,new Date().toISOString())
+    });
+    localStorage.setItem('tavryx_history',JSON.stringify(localHistory.slice(0,12)));
+    loadHistory();
   }catch(e){
     $('outTitle').textContent='TAVRYX · RECOVERING';
     $('outText').textContent=e?.message || 'The intelligence layer could not process this signal right now. Retry shortly.';
@@ -235,6 +341,7 @@ async function run(mode){
     $('statusText').textContent='LIVE · ADAPTIVE';
   }
 }
+loadHistory();
 </script>
 </body>
 </html>
