@@ -151,36 +151,85 @@ button.primary:hover{background:var(--blue)}
 
 <script>
 const $=id=>document.getElementById(id);
+
+function cleanAnswer(value){
+  if(value==null) return '';
+  let text=typeof value==='string'?value:JSON.stringify(value);
+  // Remove an appended machine-readable JSON payload from the human answer.
+  const jsonTail=text.search(/\n\s*\{\s*["\']?(situation_id|situation|mode|confidence|summary|answer)["\']?\s*:/);
+  if(jsonTail>0) text=text.slice(0,jsonTail);
+  // Keep normal bullets/headings, but remove Markdown decoration that looks noisy in the UI.
+  text=text
+    .replace(/\*\*/g,'')
+    .replace(/__+/g,'')
+    .replace(/```(?:json|text|markdown)?/gi,'')
+    .replace(/```/g,'')
+    .replace(/^#{1,6}\s*/gm,'')
+    .replace(/^\s*[-–—]{6,}\s*$/gm,'')
+    .replace(/^\s*\*\s+/gm,'• ')
+    .trim();
+  return text;
+}
+
+function firstDefined(...values){
+  return values.find(v=>v!==undefined && v!==null && v!=='');
+}
+
 async function run(mode){
   const text=$('input').value.trim();
   if(!text){ $('outTitle').textContent='A signal is required.'; $('outText').textContent='Describe the situation first.'; return; }
+
   $('statusText').textContent='THINKING · '+mode.toUpperCase();
   $('latency').textContent='PROCESSING';
-  $('outTitle').textContent='TAVRYX · REASONING';
-  $('outText').textContent='Interpreting signal, context, state and decision pressure…';
+  $('outTitle').textContent='TAVRYX · '+mode.toUpperCase();
+  $('outText').textContent='Reasoning over the signal and current situation…';
+  $('outMeta').textContent='';
+
   const started=performance.now();
   try{
-   const r=await fetch('/api/analyze',{
-  method:'POST',
-  headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({text:text,mode})
-});
+    const r=await fetch('/api/analyze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text,mode})
+    });
+
     const data=await r.json();
-    const answer=data.answer||data.response||data.output||data.message||JSON.stringify(data);
+    if(!r.ok){
+      const detail=data?.detail;
+      throw new Error(typeof detail==='string'?detail:'Analysis request failed ('+r.status+')');
+    }
+
+    const situation=data?.situation||{};
+    const state=data?.state||{};
+    const answer=cleanAnswer(firstDefined(data?.answer,data?.response,data?.output,data?.message));
+
     $('outTitle').textContent='TAVRYX · '+mode.toUpperCase();
-    $('outText').textContent=answer;
-    $('outMeta').textContent=data.situation?JSON.stringify(data.situation,null,2):'';
-    const st=data.state||data;
-    $('mode').textContent=st.mode||mode.toUpperCase();
-    $('life').textContent=st.lifecycle||'ACTIVE';
-    $('trajectory').textContent=st.trajectory||'EVOLVING';
-    $('confidence').textContent=st.confidence||'—';
+    $('outText').textContent=answer || 'No readable answer was returned. Retry the signal.';
+    $('outMeta').textContent='';
+
+    const modeValue=firstDefined(state.mode,situation.mode,data?.mode,mode.toUpperCase());
+    const lifecycle=firstDefined(state.lifecycle,situation.lifecycle,data?.lifecycle,'ACTIVE');
+    const trajectory=firstDefined(state.trajectory,situation.trajectory,data?.trajectory,'EVOLVING');
+    const confidence=firstDefined(
+      state.confidence,
+      situation.confidence,
+      data?.confidence,
+      data?.situation?.confidence,
+      data?.state?.confidence
+    );
+
+    $('mode').textContent=String(modeValue).toUpperCase();
+    $('life').textContent=String(lifecycle).toUpperCase();
+    $('trajectory').textContent=String(trajectory).toUpperCase();
+    $('confidence').textContent=confidence!==undefined ? (typeof confidence==='number' ? confidence+'%' : String(confidence)) : '—';
+
     $('s2').textContent='Situation context updated.';
     $('s3').textContent='Decision view: '+mode+'.';
     $('s4').textContent='Evidence remains live.';
   }catch(e){
     $('outTitle').textContent='TAVRYX · RECOVERING';
-    $('outText').textContent='The intelligence layer could not process this signal right now. Check the API and retry.';
+    $('outText').textContent=e?.message || 'The intelligence layer could not process this signal right now. Retry shortly.';
+    $('outMeta').textContent='';
   }finally{
     $('latency').textContent=Math.round(performance.now()-started)+' MS';
     $('statusText').textContent='LIVE · ADAPTIVE';
