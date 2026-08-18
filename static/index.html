@@ -160,7 +160,11 @@ async function run(mode){
   $('outText').textContent='Interpreting signal, context, state and decision pressure…';
   const started=performance.now();
   try{
-    const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,mode})});
+   const r=await fetch('/api/analyze',{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({text:text,mode})
+});
     const data=await r.json();
     const answer=data.answer||data.response||data.output||data.message||JSON.stringify(data);
     $('outTitle').textContent='TAVRYX · '+mode.toUpperCase();
