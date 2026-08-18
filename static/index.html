@@ -1,40 +1,229 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0a0b0f">
-<meta name="description" content="TAVRYX adaptive situation intelligence dashboard">
-<title>TAVRYX — Living Situation Intelligence</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f4f1e8">
+<meta name="description" content="TAVRYX AI — living situation intelligence console">
+<title>TAVRYX AI — Situation Intelligence</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
-:root{--paper:#f7f6f1;--card:#fffefa;--ink:#10110f;--muted:#6c6d66;--line:#d9d8d0;--blue:#3158ff;--lime:#b7f34a;--coral:#ff6b55;--shadow:0 22px 60px rgba(16,17,15,.08);--r:18px}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Manrope,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.45;overflow-x:hidden}body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.42;background-image:linear-gradient(rgba(16,17,15,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(16,17,15,.045) 1px,transparent 1px);background-size:28px 28px;mask-image:linear-gradient(to bottom,#000 0%,transparent 70%)}body:after{content:"";position:fixed;inset:-30%;pointer-events:none;background:radial-gradient(circle at 18% 10%,rgba(49,88,255,.10),transparent 18%),radial-gradient(circle at 85% 14%,rgba(183,243,74,.13),transparent 16%);filter:blur(10px)}button,textarea{font:inherit}.shell{position:relative;z-index:1;max-width:1440px;margin:auto;padding:22px 26px 30px}.top{height:56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ink);margin-bottom:22px}.brand{font-size:25px;font-weight:800;letter-spacing:-.075em;display:flex;align-items:center;gap:10px}.brand:before{content:"◒";font-size:25px;line-height:1;color:var(--blue);transform:rotate(-18deg)}.brand small{font:500 9px/1 'DM Mono',monospace;letter-spacing:.14em;color:var(--muted);padding-left:10px;border-left:1px solid var(--line)}.status{display:flex;align-items:center;gap:8px;border:1px solid var(--ink);background:var(--card);border-radius:999px;padding:7px 11px;color:var(--ink);font:500 10px 'DM Mono',monospace;box-shadow:3px 3px 0 var(--ink)}.dot{width:7px;height:7px;border-radius:50%;background:var(--lime);border:1px solid var(--ink);box-shadow:0 0 0 3px rgba(183,243,74,.35)}
-.hero{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(330px,.65fr);gap:14px}.panel{position:relative;overflow:hidden;background:rgba(255,254,250,.86);border:1px solid var(--ink);border-radius:var(--r);box-shadow:var(--shadow);padding:22px}.hero .panel:first-child{min-height:455px;display:flex;flex-direction:column;justify-content:space-between}.panel:before{content:"";position:absolute;right:16px;top:16px;width:8px;height:8px;background:var(--coral);border-radius:50%;box-shadow:14px 0 0 var(--blue),28px 0 0 var(--lime)}.eyebrow{text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font:500 9px 'DM Mono',monospace}.hero h1{font-size:clamp(52px,8.2vw,122px);line-height:.82;letter-spacing:-.095em;margin:22px 0 18px;max-width:1000px;font-weight:800}.hero h1 br{display:block}.hero p{max-width:790px;color:#4e4f4a;font-size:14px;line-height:1.7}.flow{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px}.flow span{border:1px solid var(--ink);border-radius:999px;padding:6px 9px;font:500 9px 'DM Mono',monospace;background:var(--card)}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:25px}.metric{border-top:1px solid var(--ink);padding:10px 2px 4px}.metric label{display:block;color:var(--muted);font:500 8px 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.12em}.metric b{display:block;margin-top:5px;font-size:16px;letter-spacing:-.035em}.radar-title{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:13px}.radar-list{display:grid;gap:8px;margin-top:14px;max-height:370px;overflow:auto;padding:2px 3px 4px 0}.radar-list::-webkit-scrollbar,.output::-webkit-scrollbar{width:6px}.radar-list::-webkit-scrollbar-thumb,.output::-webkit-scrollbar-thumb{background:#bfc0b9;border-radius:99px}.radar-item{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer;transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s,border-color .25s}.radar-item:hover,.radar-item:focus{border-color:var(--ink);box-shadow:4px 4px 0 var(--blue);transform:translate(-2px,-2px);outline:none}.radar-row{display:flex;justify-content:space-between;gap:10px}.pill{font:500 8px 'DM Mono',monospace;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 7px;color:#4e4f4a}.radar-item strong{display:block;margin:8px 0 2px;font-size:13px}.radar-item p{margin:0;color:var(--muted);font-size:11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.workspace{display:grid;grid-template-columns:.8fr 1.2fr;gap:14px;margin-top:14px}.input{min-height:210px;width:100%;resize:vertical;border:1px solid var(--ink);border-radius:13px;background:#fffefa;color:var(--ink);padding:16px;outline:none;font-size:14px;line-height:1.6;transition:box-shadow .2s,transform .2s}.input::placeholder{color:#999a92}.input:focus{box-shadow:5px 5px 0 var(--lime);transform:translate(-2px,-2px)}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.btn{border:1px solid var(--ink);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 12px;font-weight:700;font-size:10px;cursor:pointer;transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s}.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:4px 4px 0 var(--blue)}.btn:hover{transform:translate(-2px,-2px);box-shadow:3px 3px 0 var(--coral)}.btn.primary:hover{box-shadow:4px 4px 0 var(--lime)}.btn:disabled{opacity:.55;cursor:wait;transform:none;box-shadow:none}.output{min-height:210px;white-space:pre-wrap;color:#262722;overflow:auto;background:#f0efe9;border:1px solid var(--ink);border-radius:13px;padding:16px;font:400 12px/1.7 'DM Mono',monospace}.output .loading{color:var(--muted)}.timeline{margin-top:14px}.timeline-head{display:flex;justify-content:space-between;align-items:center}.timeline-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}.event{border:1px solid var(--ink);background:#fffefa;border-radius:12px;padding:13px;position:relative}.event:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--blue);border-radius:12px 0 0 12px}.event small{color:var(--muted);font:500 8px 'DM Mono',monospace}.event strong{display:block;margin:6px 0;font-size:12px}.event p{margin:0;color:#65665f;font-size:11px}.foot{padding:17px 2px 3px;color:var(--muted);font:500 8px 'DM Mono',monospace;display:flex;justify-content:space-between;gap:10px;text-transform:uppercase;letter-spacing:.05em}.kbd{border:1px solid var(--ink);background:#fff;padding:2px 5px;border-radius:4px;color:var(--ink);font-size:8px}
-@media(max-width:950px){.hero,.workspace{grid-template-columns:1fr}.hero .panel:first-child{min-height:auto}.timeline-list{grid-template-columns:1fr 1fr}.metrics{grid-template-columns:repeat(4,1fr)}}@media(max-width:600px){.shell{padding:13px}.top{height:auto;min-height:52px}.brand{font-size:21px}.brand small{display:none}.hero h1{font-size:58px}.panel{padding:16px}.metrics{grid-template-columns:1fr 1fr}.timeline-list{grid-template-columns:1fr}.foot{flex-direction:column}.status{box-shadow:2px 2px 0 var(--ink)}}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.radar-item,.input{transition:none;transform:none!important}}
-</style></head>
-<body><main class="shell">
-<header class="top"><div class="brand">TAVRYX <small>SITUATION INTELLIGENCE</small></div><div class="status"><i class="dot"></i><span id="health">checking system</span></div></header>
-<section class="hero">
-<div class="panel"><div class="eyebrow">Signal → Situation → Decision → Evolution</div><h1>Don't just remember.<br>Understand what changed.</h1><p>TAVRYX maintains living situations across messages and channels. It selects the right situation, tracks state deltas, revises decisions when evidence changes, and adapts reasoning effort to the stakes.</p><div class="flow"><span>Living state</span><span>Decision evolution</span><span>Adaptive reasoning</span><span>Cross-channel continuity</span><span>Human-readable evidence</span></div><div class="metrics"><div class="metric"><label>Mode</label><b id="mode">—</b></div><div class="metric"><label>Lifecycle</label><b id="lifecycle">—</b></div><div class="metric"><label>Trajectory</label><b id="trajectory">—</b></div><div class="metric"><label>Confidence</label><b id="confidence">—</b></div></div></div>
-<div class="panel"><div class="radar-title"><div class="eyebrow">Situation radar</div><span class="pill" id="count">0 threads</span></div><div class="radar-list" id="radar"><div style="color:var(--muted);font-size:12px">No situations yet.</div></div></div>
+
+:root{
+ --bg:#f4f1e8;--paper:#fffdf7;--ink:#11130f;--muted:#77786f;--line:#d7d4ca;
+ --blue:#3158ff;--lime:#c6f34b;--coral:#ff7059;--violet:#7d68ff;
+ --shadow:0 18px 50px rgba(17,19,15,.08);--radius:20px
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.45;background-image:linear-gradient(rgba(17,19,15,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(17,19,15,.035) 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(#000,transparent 88%)}
+button,textarea{font:inherit}
+button{appearance:none}
+.shell{position:relative;z-index:1;max-width:1500px;margin:auto;padding:18px 20px 28px}
+
+/* Top identity rail */
+.top{height:62px;border-bottom:1px solid var(--ink);display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.07em;font-size:23px}
+.brand-mark{width:30px;height:30px;border:1px solid var(--ink);border-radius:9px;display:grid;place-items:center;background:var(--ink);color:var(--lime);font:500 12px "DM Mono",monospace;transform:rotate(-6deg)}
+.brand small{font:500 8px "DM Mono",monospace;letter-spacing:.16em;color:var(--muted);border-left:1px solid var(--line);padding-left:11px}
+.status{display:flex;align-items:center;gap:8px;border:1px solid var(--ink);padding:7px 10px;border-radius:999px;background:var(--paper);font:500 9px "DM Mono",monospace}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 4px rgba(198,243,75,.3);border:1px solid var(--ink)}
+
+/* Intro / command deck */
+.intro{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;padding-top:14px}
+.hero,.telemetry,.workspace,.history,.rail-card{background:rgba(255,253,247,.84);border:1px solid var(--ink);border-radius:var(--radius);box-shadow:var(--shadow)}
+.hero{min-height:330px;padding:27px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;width:420px;height:420px;border:1px solid var(--line);border-radius:50%;right:-190px;top:-220px;box-shadow:0 0 0 35px rgba(49,88,255,.025),0 0 0 70px rgba(49,88,255,.02),0 0 0 105px rgba(49,88,255,.015)}
+.kicker{text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font:500 9px "DM Mono",monospace}
+.hero h1{font-size:clamp(54px,7vw,108px);line-height:.82;letter-spacing:-.1em;margin:22px 0 17px;max-width:920px}
+.hero h1 span{display:block}
+.hero h1 em{font-style:normal;color:var(--blue)}
+.hero p{max-width:650px;color:#5c5d56;font-size:13px;line-height:1.7;margin:0}
+.signature{position:absolute;bottom:22px;right:26px;font:500 8px "DM Mono",monospace;color:var(--muted);letter-spacing:.1em}
+
+.telemetry{padding:18px;display:flex;flex-direction:column;min-height:330px}
+.telemetry-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:12px}
+.radar-orbit{flex:1;position:relative;display:grid;place-items:center;min-height:220px}
+.orbit{position:absolute;border:1px solid var(--line);border-radius:50%;width:175px;height:175px}
+.orbit.o2{width:125px;height:125px;border-color:#c4c1b8}.orbit.o3{width:75px;height:75px;border-color:#aaa79e}
+.core{width:44px;height:44px;border-radius:50%;background:var(--ink);border:2px solid var(--lime);box-shadow:0 0 0 9px rgba(198,243,75,.14),0 0 45px rgba(49,88,255,.13);z-index:2}
+.signal{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--blue);border:1px solid var(--ink)}
+.s1{transform:translate(68px,-52px)}.s2{transform:translate(-63px,31px);background:var(--coral)}.s3{transform:translate(33px,68px);background:var(--lime)}
+.orbit-label{position:absolute;top:10px;left:12px;font:500 8px "DM Mono",monospace;color:var(--muted)}
+.telemetry-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.metric{border-top:1px solid var(--ink);padding:9px 2px 2px}.metric label{display:block;text-transform:uppercase;color:var(--muted);font:500 7px "DM Mono",monospace;letter-spacing:.12em}.metric b{display:block;margin-top:4px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Workbench */
+.workbench{display:grid;grid-template-columns:.82fr 1.18fr;gap:14px;margin-top:14px}
+.workspace,.output-card{padding:20px}
+.input-wrap{position:relative;margin-top:11px}
+.input{width:100%;min-height:190px;resize:vertical;border:1px solid var(--ink);border-radius:15px;background:#fbfaf4;color:var(--ink);padding:16px;outline:none;font-size:13px;line-height:1.65;transition:.22s cubic-bezier(.16,1,.3,1)}
+.input:focus{background:#fff;box-shadow:6px 6px 0 var(--lime);transform:translate(-2px,-2px)}
+.input::placeholder{color:#999a92}
+.char{position:absolute;right:10px;bottom:9px;color:#a0a097;font:500 7px "DM Mono",monospace}
+
+.actions{display:grid;grid-template-columns:1.5fr repeat(5,1fr);gap:6px;margin-top:9px}
+.btn{border:1px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:10px;padding:10px 8px;font-size:9px;font-weight:800;cursor:pointer;transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s,background .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:3px 3px 0 var(--ink)}
+.btn.primary{background:var(--ink);color:white;box-shadow:4px 4px 0 var(--blue)}
+.btn.primary:hover{box-shadow:4px 4px 0 var(--lime)}
+.btn:disabled{opacity:.55;cursor:wait;transform:none;box-shadow:none}
+.command-note{margin-top:9px;color:var(--muted);font:500 8px "DM Mono",monospace}
+
+.output-card{min-height:290px}
+.output-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:11px}
+.live-label{display:flex;gap:7px;align-items:center;font:500 8px "DM Mono",monospace;color:var(--muted)}
+.live-label i{width:6px;height:6px;background:var(--coral);border-radius:50%}
+.output{margin-top:12px;min-height:220px;max-height:390px;overflow:auto;white-space:pre-wrap;background:#12140f;color:#f4f1e8;border-radius:15px;padding:18px;font:400 11px/1.75 "DM Mono",monospace;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.output::-webkit-scrollbar,.radar-list::-webkit-scrollbar{width:6px}.output::-webkit-scrollbar-thumb,.radar-list::-webkit-scrollbar-thumb{background:#55584f;border-radius:99px}
+
+/* Lower intelligence area */
+.lower{display:grid;grid-template-columns:1.25fr .75fr;gap:14px;margin-top:14px}
+.history{padding:19px}
+.history-head{display:flex;justify-content:space-between;align-items:center}
+.timeline-list{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:13px}
+.event{border:1px solid var(--line);background:#fffefa;border-radius:12px;padding:12px;min-height:105px;position:relative;overflow:hidden}
+.event:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue)}
+.event small{font:500 7px "DM Mono",monospace;color:var(--muted)}.event strong{display:block;font-size:11px;margin:6px 0}.event p{font-size:10px;color:#66675f;margin:0;line-height:1.5}
+.rail-card{padding:19px}.rail-card h2{font-size:28px;letter-spacing:-.06em;margin:10px 0}.rail-card p{font-size:11px;color:#66675f;line-height:1.65}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}.chip{border:1px solid var(--ink);border-radius:999px;padding:6px 8px;font:500 7px "DM Mono",monospace;background:var(--paper)}
+.radar-list{display:grid;gap:7px;margin-top:10px;max-height:215px;overflow:auto}.radar-item{border:1px solid var(--line);border-radius:11px;padding:10px;background:#fff;cursor:pointer;transition:.2s}.radar-item:hover,.radar-item:focus{border-color:var(--ink);box-shadow:3px 3px 0 var(--violet);transform:translate(-1px,-1px);outline:none}.radar-row{display:flex;justify-content:space-between;gap:8px}.pill{font:500 7px "DM Mono",monospace;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 6px}.radar-item strong{display:block;margin:6px 0 2px;font-size:11px}.radar-item p{margin:0;color:var(--muted);font-size:9px;line-height:1.45}
+.foot{padding:16px 2px 3px;display:flex;justify-content:space-between;gap:10px;color:var(--muted);font:500 7px "DM Mono",monospace;text-transform:uppercase;letter-spacing:.06em}
+.btn.refresh{padding:7px 9px}
+
+@media(max-width:1050px){.intro,.workbench,.lower{grid-template-columns:1fr}.hero{min-height:310px}.actions{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:650px){.shell{padding:12px}.top{height:55px}.brand small{display:none}.hero,.workspace,.output-card,.history,.rail-card{padding:15px}.hero h1{font-size:58px}.telemetry-grid{grid-template-columns:1fr 1fr}.timeline-list{grid-template-columns:1fr}.actions{grid-template-columns:1fr 1fr}.actions .primary{grid-column:1/-1}.foot{flex-direction:column}.signature{display:none}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="top">
+  <div class="brand"><span class="brand-mark">TX</span><span>TAVRYX</span><small>AI · SITUATION INTELLIGENCE</small></div>
+  <div class="status"><i class="dot"></i><span id="health">checking system</span></div>
+</header>
+
+<section class="intro">
+  <article class="hero">
+    <div>
+      <div class="kicker">01 / Living intelligence console</div>
+      <h1><span>Understand</span><span>what <em>changed.</em></span></h1>
+      <p>TAVRYX turns incoming signals into living situations. It tracks state deltas, decision evolution and trajectory so the next answer starts from the situation — not from zero.</p>
+    </div>
+    <div class="signature">SIGNAL → SITUATION → DECISION → EVOLUTION</div>
+  </article>
+
+  <aside class="telemetry">
+    <div class="telemetry-head"><span class="kicker">Situation radar</span><span class="pill" id="count">0 threads</span></div>
+    <div class="radar-orbit">
+      <span class="orbit o1"></span><span class="orbit o2"></span><span class="orbit o3"></span>
+      <span class="core"></span><i class="signal s1"></i><i class="signal s2"></i><i class="signal s3"></i>
+      <span class="orbit-label">LIVE STATE FIELD</span>
+    </div>
+    <div class="telemetry-grid">
+      <div class="metric"><label>Mode</label><b id="mode">—</b></div>
+      <div class="metric"><label>Lifecycle</label><b id="lifecycle">—</b></div>
+      <div class="metric"><label>Trajectory</label><b id="trajectory">—</b></div>
+      <div class="metric"><label>Confidence</label><b id="confidence">—</b></div>
+    </div>
+  </aside>
 </section>
-<section class="workspace"><div class="panel"><div class="eyebrow">Create / update signal</div><textarea id="input" class="input" aria-label="Situation message" placeholder="Example: The payment API is returning HTTP 500s again, but the rollback reduced errors by 80%. What changed?"></textarea><div class="actions"><button class="btn primary" id="analyze" onclick="analyze()">Analyze situation</button><button class="btn" onclick="command('focus')">Focus</button><button class="btn" onclick="command('brief')">Brief</button><button class="btn" onclick="command('why')">Why</button><button class="btn" onclick="command('timeline')">Timeline</button><button class="btn" onclick="command('state')">State</button></div><div style="margin-top:12px;color:var(--muted);font-size:10px">Press <span class="kbd">⌘ ↵</span> to analyze.</div></div>
-<div class="panel"><div class="eyebrow">Adaptive output</div><div id="output" class="output" style="margin-top:10px">Waiting for a signal.</div></div></section>
-<section class="timeline panel"><div class="timeline-head"><div class="eyebrow">Recent evolution</div><button class="btn" onclick="refresh()">Refresh</button></div><div id="timeline" class="timeline-list"><div style="color:var(--muted);font-size:12px">No events yet.</div></div></section>
-<footer class="foot"><span>TAVRYX 3.0 · production-oriented adaptive agent</span><span>Caspian handles communication; TAVRYX handles evolving situations.</span></footer>
+
+<section class="workbench">
+  <article class="workspace">
+    <div class="kicker">02 / Inject a signal</div>
+    <div class="input-wrap">
+      <textarea id="input" class="input" aria-label="Situation message" placeholder="Example: The payment API is returning HTTP 500s again, but the rollback reduced errors by 80%. What changed?"></textarea>
+      <span class="char" id="char">0 / 4000</span>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="analyze" onclick="analyze()">Analyze situation</button>
+      <button class="btn" onclick="command('focus')">Focus</button>
+      <button class="btn" onclick="command('brief')">Brief</button>
+      <button class="btn" onclick="command('why')">Why</button>
+      <button class="btn" onclick="command('timeline')">Timeline</button>
+      <button class="btn" onclick="command('state')">State</button>
+    </div>
+    <div class="command-note">Each control interrogates the same living situation from a different angle · ⌘↵ to analyze</div>
+  </article>
+
+  <article class="output-card">
+    <div class="output-head"><span class="kicker">03 / Adaptive output</span><span class="live-label"><i></i> LIVE RESPONSE</span></div>
+    <div id="output" class="output">Waiting for a signal.</div>
+  </article>
+</section>
+
+<section class="lower">
+  <article class="history">
+    <div class="history-head"><span class="kicker">04 / Recent evolution</span><button class="btn refresh" onclick="refresh()">Refresh</button></div>
+    <div id="timeline" class="timeline-list"><div style="color:var(--muted);font-size:10px">No events yet.</div></div>
+  </article>
+
+  <aside class="rail-card">
+    <div class="kicker">05 / Active situation radar</div>
+    <h2>Stay ahead<br>of the state.</h2>
+    <p>Click any live thread to load its current situation into the response console. TAVRYX keeps the decision context attached to the situation.</p>
+    <div class="chips"><span class="chip">Living state</span><span class="chip">Decision evolution</span><span class="chip">Evidence</span><span class="chip">Adaptive reasoning</span></div>
+    <div id="radar" class="radar-list"><div style="color:var(--muted);font-size:10px">No situations yet.</div></div>
+  </aside>
+</section>
+
+<footer class="foot"><span>TAVRYX AI · production situation intelligence</span><span>Caspian communication layer · Gemini reasoning layer</span></footer>
 </main>
+
 <script>
 const $=id=>document.getElementById(id);
 function setOutput(t){$('output').textContent=t||'No response.'}
 async function getJSON(url,opts){const r=await fetch(url,opts);const d=await r.json();if(!r.ok)throw new Error(d.detail||'Request failed');return d}
-async function refresh(){try{const [h,r,s,m]=await Promise.all([getJSON('/health'),getJSON('/api/radar'),getJSON('/api/state'),getJSON('/api/memory')]);$('health').textContent=h.status==='ok'?`online · ${h.model}`:'degraded';$('count').textContent=`${r.items.length} threads`;if(s.situation){const x=s.situation;$('mode').textContent=x.mode;$('lifecycle').textContent=x.lifecycle;$('trajectory').textContent=x.trajectory;$('confidence').textContent=x.confidence+'%'}renderRadar(r.items);renderTimeline(m.items)}catch(e){$('health').textContent='offline';console.error(e)}}
-function renderRadar(items){$('radar').innerHTML=items.length?items.map(s=>`<article class="radar-item" tabindex="0" onclick="loadSituation('${s.situation_id}')" onkeydown="if(event.key==='Enter')loadSituation('${s.situation_id}')"><div class="radar-row"><span class="pill">${s.mode}</span><span class="pill">${s.severity}</span></div><strong>${esc(s.title)}</strong><p>${esc(s.summary)}</p></article>`).join(''):'<div style="color:var(--muted);font-size:12px">No situations yet.</div>'}
-function renderTimeline(items){$('timeline').innerHTML=items.slice(0,6).map(r=>{const s=JSON.parse(r.situation_json);return `<article class="event"><small>${esc(r.channel)} · ${new Date(r.created_at).toLocaleTimeString()}</small><strong>${esc(s.title)}</strong><p>${esc(s.state_delta||s.summary||'Signal received')}</p></article>`}).join('')||'<div style="color:var(--muted);font-size:12px">No events yet.</div>'}
-async function loadSituation(id){try{const d=await getJSON('/api/situations/'+encodeURIComponent(id));const s=d.situation;setOutput(`TAVRYX · ${s.severity} · ${s.mode}\n\n${s.title}\n\n${s.summary}\n\nSTATE DELTA\n${s.state_delta||'—'}\n\nNEXT MOVE\n${s.next_move||'—'}\n\nCONFIDENCE\n${s.confidence}%`)}catch(e){setOutput(e.message)}}
-async function analyze(){const text=$('input').value.trim();if(!text)return;const b=$('analyze');b.disabled=true;b.textContent='Mapping situation…';setOutput('TAVRYX is mapping the signal and checking existing situation threads…');try{const d=await getJSON('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sender:'dashboard',channel:'web'})});setOutput(d.response);$('input').value='';await refresh()}catch(e){setOutput('TAVRYX · RECOVERING\n\n'+e.message)}finally{b.disabled=false;b.textContent='Analyze situation'}}
-async function command(c){try{const d=await getJSON('/api/command/'+c,{method:'POST'});setOutput(d.response);await refresh()}catch(e){setOutput('TAVRYX · '+e.message)}}
+async function refresh(){
+  try{
+    const [h,r,s,m]=await Promise.all([getJSON('/health'),getJSON('/api/radar'),getJSON('/api/state'),getJSON('/api/memory')]);
+    $('health').textContent=h.status==='ok'?`online · ${h.model}`:'degraded';
+    $('count').textContent=`${r.items.length} threads`;
+    if(s.situation){const x=s.situation;$('mode').textContent=x.mode;$('lifecycle').textContent=x.lifecycle;$('trajectory').textContent=x.trajectory;$('confidence').textContent=x.confidence+'%'}
+    renderRadar(r.items);renderTimeline(m.items)
+  }catch(e){$('health').textContent='offline';console.error(e)}
+}
+function renderRadar(items){
+  $('radar').innerHTML=items.length?items.map(s=>`<article class="radar-item" tabindex="0" onclick="loadSituation('${s.situation_id}')" onkeydown="if(event.key==='Enter')loadSituation('${s.situation_id}')"><div class="radar-row"><span class="pill">${s.mode}</span><span class="pill">${s.severity}</span></div><strong>${esc(s.title)}</strong><p>${esc(s.summary)}</p></article>`).join(''):'<div style="color:var(--muted);font-size:10px">No situations yet.</div>'
+}
+function renderTimeline(items){
+  $('timeline').innerHTML=items.slice(0,6).map(r=>{const s=JSON.parse(r.situation_json);return `<article class="event"><small>${esc(r.channel)} · ${new Date(r.created_at).toLocaleTimeString()}</small><strong>${esc(s.title)}</strong><p>${esc(s.state_delta||s.summary||'Signal received')}</p></article>`}).join('')||'<div style="color:var(--muted);font-size:10px">No events yet.</div>'
+}
+async function loadSituation(id){
+  try{const d=await getJSON('/api/situations/'+encodeURIComponent(id));const s=d.situation;setOutput(`TAVRYX · ${s.severity} · ${s.mode}\n\n${s.title}\n\n${s.summary}\n\nSTATE DELTA\n${s.state_delta||'—'}\n\nNEXT MOVE\n${s.next_move||'—'}\n\nCONFIDENCE\n${s.confidence}%`)}
+  catch(e){setOutput(e.message)}
+}
+async function analyze(){
+  const text=$('input').value.trim();if(!text)return;
+  const b=$('analyze');b.disabled=true;b.textContent='Mapping situation…';
+  setOutput('TAVRYX is mapping the signal and checking existing situation threads…');
+  try{
+    const d=await getJSON('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sender:'dashboard',channel:'web'})});
+    setOutput(d.response);$('input').value='';$('char').textContent='0 / 4000';await refresh()
+  }catch(e){setOutput('TAVRYX · RECOVERING\n\n'+e.message)}
+  finally{b.disabled=false;b.textContent='Analyze situation'}
+}
+async function command(c){
+  const labels={focus:'Focusing the situation…',brief:'Preparing the brief…',why:'Tracing the reasoning…',timeline:'Reconstructing the timeline…',state:'Reading current state…'};
+  const b=[...document.querySelectorAll('.actions .btn')].find(x=>x.textContent.trim().toLowerCase()===c);
+  if(b){b.disabled=true;b.textContent=labels[c]||'Working…'}
+  setOutput(`TAVRYX · ${labels[c]||'Working…'}\n\nReading the latest situation state…`);
+  try{
+    const d=await getJSON('/api/command/'+encodeURIComponent(c),{method:'POST'});
+    setOutput(d.response||'No response returned.');
+    await refresh();
+  }catch(e){
+    setOutput(`TAVRYX · ${e.message}`);
+  }finally{
+    if(b){b.disabled=false;b.textContent=c[0].toUpperCase()+c.slice(1)}
+  }
+}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-$('input').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze()});refresh();setInterval(refresh,15000);
-</script></body></html>
+$('input').addEventListener('input',e=>{$('char').textContent=`${e.target.value.length} / 4000`});
+$('input').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze()});
+refresh();setInterval(refresh,15000);
+</script>
+</body>
+</html>
