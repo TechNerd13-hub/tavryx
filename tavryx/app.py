@@ -113,11 +113,19 @@ def create_app():
         _authorize(x_tavryx_token)
         _rate_limit(request)
         try:
-            return engine().analyze(message).model_dump(mode="json")
+            result = engine().analyze(message)
+            payload = result.model_dump(mode="json")
+            # Keep a top-level answer for every successful degradation path as well.
+            payload["answer"] = result.situation.answer or result.response
+            payload["response"] = result.response
+            payload["state"] = result.situation.model_dump(mode="json")
+            return payload
         except RuntimeError as e:
             raise HTTPException(status_code=503, detail=str(e))
         except Exception:
-            raise HTTPException(status_code=503, detail="TAVRYX is temporarily unable to process this situation. Retry shortly.")
+            # The engine is designed to degrade gracefully. This branch is only for
+            # programmer/configuration errors that should remain visible to the UI.
+            raise HTTPException(status_code=500, detail="TAVRYX encountered an internal processing error. Retry shortly.")
 
     @app.post("/api/command/{command}")
     def command(request: Request, command, argument: str | None = None, x_tavryx_token: str | None = Header(default=None)):

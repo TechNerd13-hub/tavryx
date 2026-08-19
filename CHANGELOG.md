@@ -11,3 +11,7 @@
 - Improved failure boundary and production-safe responses.
 - Expanded offline test coverage.
 - Gemini 3.6 Flash pinned as the stable production model.
+
+- Hardened `/api/analyze` with structured-output recovery, model fallback, request timeout, and guaranteed non-empty answer degradation.
+- Added dashboard lens propagation for Analyze/Focus/Brief/Why/Timeline/State.
+- Moved the situation objective/evolution concept into a compact top strip and removed the redundant bulky evolution card.

@@ -72,6 +72,13 @@ button.primary:hover{background:var(--blue)}
 @media(max-width:900px){.hero,.workspace,.evolution{grid-template-columns:1fr}.orbit{min-height:330px}h1{font-size:64px}.metrics{grid-template-columns:repeat(2,1fr);gap:12px}.app{padding:14px}.command-strip{align-items:flex-start;gap:20px;flex-direction:column}}
 @media(max-width:560px){.top{align-items:flex-start;gap:12px}.brand{flex-wrap:wrap}.brand span{width:100%}.status{font-size:10px}.card{padding:20px;border-radius:22px}h1{font-size:55px}.lead{font-size:15px}.actions button{flex:1 1 auto}.metrics{left:20px;right:20px}.orbit{min-height:310px}}
 
+.logic-strip{margin-top:14px;padding:18px 20px;display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr 1fr;gap:18px;align-items:start}
+.logic-intro strong{display:block;margin-top:6px;font-size:18px;letter-spacing:-.025em}
+.logic-step{border-top:1.5px solid var(--ink);padding-top:9px}
+.logic-step strong{font:10px ui-monospace,monospace;letter-spacing:.04em}
+.logic-step p{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.4}
+@media(max-width:900px){.logic-strip{grid-template-columns:1fr 1fr}.logic-intro{grid-column:1/-1}}
+@media(max-width:560px){.logic-strip{grid-template-columns:1fr}.logic-intro{grid-column:auto}}
 .history-section{margin-top:14px;display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
 .history-card{min-height:230px}
 .history-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
@@ -140,27 +147,21 @@ button.primary:hover{background:var(--blue)}
   </article>
 </section>
 
-<section class="evolution">
-  <article class="card">
-    <div class="kicker">04 / Decision evolution</div>
-    <div class="timeline">
-      <div class="step"><strong>01 · SIGNAL</strong><p id="s1">Incoming evidence.</p></div>
-      <div class="step"><strong>02 · SITUATION</strong><p id="s2">Context assembled.</p></div>
-      <div class="step"><strong>03 · DECISION</strong><p id="s3">Priority selected.</p></div>
-      <div class="step"><strong>04 · EVOLUTION</strong><p id="s4">Next change tracked.</p></div>
-    </div>
-  </article>
-  <article class="card">
-    <div class="kicker">05 / Active situation</div>
-    <h2 style="font-size:40px;line-height:.95;letter-spacing:-.05em;margin:22px 0 12px">Stay ahead<br>of the state.</h2>
-    <p style="color:var(--muted);line-height:1.6">The visual system deliberately treats the situation as the primary object — not the chatbot conversation.</p>
-  </article>
+<section class="card logic-strip">
+  <div class="logic-intro">
+    <div class="kicker">01 / Situation logic</div>
+    <strong>One signal.<br>One evolving state.</strong>
+  </div>
+  <div class="logic-step"><strong>01 · SIGNAL</strong><p id="logicSignal">Incoming evidence.</p></div>
+  <div class="logic-step"><strong>02 · SITUATION</strong><p id="logicSituation">Context assembled.</p></div>
+  <div class="logic-step"><strong>03 · DECISION</strong><p id="logicDecision">Priority selected.</p></div>
+  <div class="logic-step"><strong>04 · EVOLUTION</strong><p id="logicEvolution">Next change tracked.</p></div>
 </section>
 
 <section class="history-section">
   <article class="card history-card">
     <div class="history-head">
-      <div class="kicker">05 / Recent evolution</div>
+      <div class="kicker">04 / Recent evolution</div>
       <button onclick="loadHistory()">Refresh</button>
     </div>
     <div id="historyList" class="history-list">
@@ -168,7 +169,7 @@ button.primary:hover{background:var(--blue)}
     </div>
   </article>
   <article class="card radar-copy">
-    <div class="kicker">06 / Active situation radar</div>
+    <div class="kicker">05 / Active situation radar</div>
     <h2>Stay ahead<br>of the state.</h2>
     <p>Click any recent thread to load its current situation into the response console. TAVRYX keeps the decision context attached to the situation.</p>
     <div class="radar-tags"><span>Living state</span><span>Decision evolution</span><span>Evidence</span><span>Adaptive reasoning</span></div>
@@ -282,13 +283,22 @@ async function run(mode){
 
   const started=performance.now();
   try{
-    const r=await fetch('/api/analyze',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text,mode})
-    });
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),50000);
+    let r;
+    try{
+      r=await fetch('/api/analyze',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text,mode}),
+        signal:controller.signal,
+        cache:'no-store'
+      });
+    }finally{
+      clearTimeout(timeout);
+    }
 
-    const data=await r.json();
+    const data=await r.json().catch(()=>({}));
     if(!r.ok){
       const detail=data?.detail;
       throw new Error(typeof detail==='string'?detail:'Analysis request failed ('+r.status+')');
@@ -318,9 +328,10 @@ async function run(mode){
     $('trajectory').textContent=String(trajectory).toUpperCase();
     $('confidence').textContent=confidence!==undefined ? (typeof confidence==='number' ? confidence+'%' : String(confidence)) : '—';
 
-    $('s2').textContent='Situation context updated.';
-    $('s3').textContent='Decision view: '+mode+'.';
-    $('s4').textContent='Evidence remains live.';
+    $('logicSignal').textContent='New evidence received.';
+    $('logicSituation').textContent='Situation context updated.';
+    $('logicDecision').textContent='Decision view: '+mode+'.';
+    $('logicEvolution').textContent='Evidence remains live.';
 
     const localHistory=JSON.parse(localStorage.getItem('tavryx_history')||'[]');
     localHistory.unshift({
@@ -333,8 +344,10 @@ async function run(mode){
     localStorage.setItem('tavryx_history',JSON.stringify(localHistory.slice(0,12)));
     loadHistory();
   }catch(e){
-    $('outTitle').textContent='TAVRYX · RECOVERING';
-    $('outText').textContent=e?.message || 'The intelligence layer could not process this signal right now. Retry shortly.';
+    $('outTitle').textContent='TAVRYX · ANSWER UNAVAILABLE';
+    $('outText').textContent=e?.name==='AbortError'
+      ? 'The analysis request took too long. The service is still available; retry the signal once.'
+      : (e?.message || 'TAVRYX could not complete this analysis. Retry the signal.');
     $('outMeta').textContent='';
   }finally{
     $('latency').textContent=Math.round(performance.now()-started)+' MS';

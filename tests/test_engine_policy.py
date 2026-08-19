@@ -15,3 +15,16 @@ def test_thinking_policy_escalates_for_complex_decisions(tmp_path):
     e = object.__new__(TavryxEngine)
     e.memory = MemoryStore(tmp_path / "t.db")
     assert e._thinking_level("compare architecture options and help me choose a deployment strategy", None) == "medium"
+
+
+def test_fallback_result_always_contains_an_answer(tmp_path):
+    e = object.__new__(TavryxEngine)
+    e.memory = MemoryStore(tmp_path / "t.db")
+    result = e._fallback_result(
+        type("M", (), {"text": "What is recursion?", "sender": "tester", "channel": "test"})(),
+        None,
+        __import__("time").perf_counter(),
+        "analyze",
+    )
+    assert result.situation.answer
+    assert result.response

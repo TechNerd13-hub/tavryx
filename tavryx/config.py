@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     port: int = 8000
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-3.6-flash"
+    gemini_fallback_model: str = "gemini-3.5-flash"
+    gemini_timeout_seconds: float = Field(default=45.0, ge=10.0, le=120.0)
     caspian_api_key: str | None = None
     caspian_base_url: str = "https://api.trycaspianai.com"
     tavryx_db_path: str = "data/tavryx.db"

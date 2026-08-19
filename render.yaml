@@ -13,6 +13,10 @@ services:
         value: https://api.trycaspianai.com
       - key: GEMINI_MODEL
         value: gemini-3.6-flash
+      - key: GEMINI_FALLBACK_MODEL
+        value: gemini-3.5-flash
+      - key: GEMINI_TIMEOUT_SECONDS
+        value: "45"
       - key: TAVRYX_DB_PATH
         value: /app/data/tavryx.db
       - key: APP_ENV

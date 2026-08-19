@@ -1,11 +1,15 @@
 import json
+import logging
 import re
-import uuid
 import time
+import uuid
+
 from .config import settings
 from .memory import MemoryStore
-from .models import AgentResult, IncomingMessage, Situation, Lifecycle
+from .models import AgentResult, IncomingMessage, Situation, Lifecycle, Mode
 from .prompts import MODE_GUIDANCE, SYSTEM_PROMPT
+
+log = logging.getLogger("tavryx.engine")
 
 SCHEMA = {
     "type": "OBJECT",
@@ -42,24 +46,31 @@ SCHEMA = {
     ],
 }
 
+
 class TavryxEngine:
     def __init__(self, memory):
         self.memory = memory
-        if not settings.gemini_api_key:
-            raise RuntimeError("GEMINI_API_KEY is not configured")
-        from google import genai
-        self.client = genai.Client(api_key=settings.gemini_api_key)
+        self.client = None
+        if settings.gemini_api_key:
+            from google import genai
+            from google.genai import types
+            self.client = genai.Client(
+                api_key=settings.gemini_api_key,
+                http_options=types.HttpOptions(timeout=int(settings.gemini_timeout_seconds * 1000)),
+            )
 
     def _extract_json(self, text):
         if not text:
             raise ValueError("Gemini returned an empty response")
+        text = text.strip()
         try:
-            return json.loads(text.strip())
+            return json.loads(text)
         except json.JSONDecodeError:
-            m = re.search(r"\{.*\}", text, re.DOTALL)
-            if not m:
+            # Be tolerant of a provider response that wraps otherwise-valid JSON.
+            match = re.search(r"\{.*\}", text, re.DOTALL)
+            if not match:
                 raise
-            return json.loads(m.group(0))
+            return json.loads(match.group(0))
 
     def _context(self, sender=None):
         history = []
@@ -90,7 +101,6 @@ class TavryxEngine:
         return candidates
 
     def _thinking_level(self, text, previous):
-        """Adaptive reasoning budget: fast by default, deeper only when justified."""
         value = text.lower()
         critical = any(k in value for k in (
             "production down", "outage", "data loss", "security breach", "breach",
@@ -107,32 +117,72 @@ class TavryxEngine:
             return settings.tavryx_complex_thinking_level
         return settings.tavryx_fast_thinking_level
 
-    def _generate(self, payload, thinking_level):
-        config_kwargs = dict(
-            system_instruction=SYSTEM_PROMPT,
-            response_mime_type="application/json",
-            response_schema=SCHEMA,
-            max_output_tokens=settings.tavryx_max_output_tokens,
-        )
-        # Production still reasons on every request, but keeps the budget tight.
-        # Simple questions use LOW thinking; complex/critical requests escalate to
-        # the configured higher level. This avoids the old production-only MINIMAL
-        # path that could make TAVRYX feel like it was not actually thinking.
+    def _config(self, thinking_level, structured=True):
         from google.genai import types
-        effective_level = thinking_level
-        config_kwargs["max_output_tokens"] = min(settings.tavryx_max_output_tokens, 900)
-        config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_level=effective_level)
+        kwargs = dict(
+            system_instruction=SYSTEM_PROMPT,
+            max_output_tokens=settings.tavryx_max_output_tokens,
+            thinking_config=types.ThinkingConfig(thinking_level=thinking_level),
+        )
+        if structured:
+            kwargs.update(
+                response_mime_type="application/json",
+                response_schema=SCHEMA,
+            )
+        return types.GenerateContentConfig(**kwargs)
+
+    def _generate(self, payload, thinking_level):
+        if self.client is None:
+            raise RuntimeError("GEMINI_API_KEY is not configured")
         return self.client.models.generate_content(
             model=settings.gemini_model,
             contents=json.dumps(payload, ensure_ascii=False),
-            config=types.GenerateContentConfig(**config_kwargs),
+            config=self._config(thinking_level, structured=True),
         )
+
+    def _generate_text(self, payload, thinking_level, model=None):
+        """Unstructured recovery call used when structured generation is rejected."""
+        if self.client is None:
+            raise RuntimeError("Gemini client is not configured")
+        recovery = dict(payload)
+        recovery["instruction"] = (
+            recovery.get("instruction", "")
+            + "\nReturn a direct human-readable answer first. "
+              "Do not output JSON, markdown code fences, or machine-readable metadata. "
+              "Keep it concise and useful."
+        )
+        return self.client.models.generate_content(
+            model=model or settings.gemini_model,
+            contents=json.dumps(recovery, ensure_ascii=False),
+            config=self._config(thinking_level, structured=False),
+        )
+
+    def _answer_from_text(self, text):
+        if not text:
+            return ""
+        # Remove accidental fences but preserve useful Markdown bullets.
+        text = re.sub(r"```(?:text|markdown)?", "", text, flags=re.I)
+        return text.replace("```", "").strip()
 
     def analyze(self, message: IncomingMessage):
         started = time.perf_counter()
         previous = self.memory.latest_for(message.sender) or self.memory.latest()
+        requested_mode = (message.mode or "").strip().lower()
+
+        mode_lens = {
+            "analyze": "Give the complete decision-oriented situation answer.",
+            "focus": "Return the single highest-leverage next move and why it matters.",
+            "brief": "Give a compact current-state brief: what is happening, impact, and next move.",
+            "why": "Explain why the situation is in its current state and what evidence caused the movement.",
+            "timeline": "Summarize the evolution of this situation from prior evidence to the current state.",
+            "state": "Describe the current state: lifecycle, severity, trajectory, confidence, and the key state delta.",
+        }
+        lens = mode_lens.get(requested_mode, mode_lens["analyze"])
+
         payload = {
             "current_message": message.text,
+            "requested_view": requested_mode or "analyze",
+            "view_instruction": lens,
             "sender": message.sender,
             "channel": message.channel,
             "previous_situation": previous.model_dump(mode="json") if previous else None,
@@ -145,29 +195,54 @@ class TavryxEngine:
                 "If continuing, reuse that candidate's exact situation_id and update its state. "
                 "If unrelated, create a new S-XXXXXXXX id. Never merge unrelated situations merely because they share a mode. "
                 "Treat channel as transport metadata; continuity belongs to the situation and sender. "
-                "Answer the user's actual question directly. Never return only a situation label. For learning questions, provide the useful explanation/formulas/example requested. For general questions, provide a concrete answer before the situation metadata. Keep the output concise but complete. State what changed, what is known, what is inferred, and the single highest-leverage next move."
+                "Answer the user's actual question directly. Never return only a situation label. "
+                "For learning questions, provide the useful explanation/formulas/example requested. "
+                "For general questions, provide a concrete answer before the situation metadata. "
+                f"{lens} Keep the answer concise but complete. "
+                "State what changed, what is known, what is inferred, and the single highest-leverage next move."
             ),
         }
+
         level = self._thinking_level(message.text, previous)
+
+        # Stage 1: structured generation.
         try:
             response = self._generate(payload, level)
-        except Exception:
-            # One bounded fast recovery attempt. If the upstream model is temporarily
-            # unavailable, return a deterministic safety result instead of a 503 so the
-            # production dashboard remains usable and the latest state is preserved.
-            if level != settings.tavryx_fast_thinking_level:
-                try:
-                    response = self._generate(payload, settings.tavryx_fast_thinking_level)
-                except Exception:
-                    return self._fallback_result(message, previous, started)
-            else:
-                return self._fallback_result(message, previous, started)
+            raw = self._extract_json(getattr(response, "text", "") or "")
+            if not raw.get("answer"):
+                raw["answer"] = raw.get("summary", "")
+            situation = Situation.model_validate(raw)
+        except Exception as exc:
+            log.warning("Structured Gemini analysis failed: %s", exc)
 
-        raw = self._extract_json(response.text)
-        if not raw.get("answer"):
-            raw["answer"] = raw.get("summary", "")
-        situation = Situation.model_validate(raw)
-        situation.reasoning_level = {"low": "FAST", "medium": "BALANCED", "high": "DEEP", "minimal": "FAST"}.get(level, "BALANCED")
+            # Stage 2: same model, plain text. This avoids turning schema/format
+            # failures into a fake outage and still gives the user an answer.
+            try:
+                response = self._generate_text(payload, level)
+                answer = self._answer_from_text(getattr(response, "text", "") or "")
+                if not answer:
+                    raise ValueError("Gemini recovery returned an empty answer")
+                situation = self._situation_from_answer(message, previous, answer, started)
+            except Exception as recovery_exc:
+                log.warning("Gemini text recovery failed: %s", recovery_exc)
+
+                # Stage 3: lower-cost/faster model, if configured and different.
+                try:
+                    if settings.gemini_fallback_model and settings.gemini_fallback_model != settings.gemini_model:
+                        response = self._generate_text(payload, settings.tavryx_fast_thinking_level, settings.gemini_fallback_model)
+                        answer = self._answer_from_text(getattr(response, "text", "") or "")
+                        if not answer:
+                            raise ValueError("Fallback Gemini returned an empty answer")
+                        situation = self._situation_from_answer(message, previous, answer, started)
+                    else:
+                        return self._fallback_result(message, previous, started, requested_mode)
+                except Exception as fallback_exc:
+                    log.warning("Gemini fallback model failed: %s", fallback_exc)
+                    return self._fallback_result(message, previous, started, requested_mode)
+
+        situation.reasoning_level = {
+            "low": "FAST", "medium": "BALANCED", "high": "DEEP", "minimal": "FAST"
+        }.get(level, "BALANCED")
         situation = self._normalize_identity(previous, situation)
         if previous and situation.situation_id == previous.situation_id:
             situation = self._apply_transition(previous, situation)
@@ -181,44 +256,78 @@ class TavryxEngine:
         situation.processing_ms = round((time.perf_counter() - started) * 1000)
         return AgentResult(situation=situation, response=render_situation(situation))
 
+    def _situation_from_answer(self, message, previous, answer, started):
+        """Wrap a successful plain-text AI answer in a valid situation."""
+        mode = previous.mode if previous else Mode.GENERAL
+        lifecycle = previous.lifecycle if previous else Lifecycle.ACTIVE
+        sid = previous.situation_id if previous else "S-" + uuid.uuid4().hex[:8].upper()
+        return Situation(
+            situation_id=sid,
+            title=previous.title if previous else "TAVRYX analysis",
+            mode=mode,
+            lifecycle=lifecycle,
+            severity=previous.severity if previous else "LOW",
+            trajectory=previous.trajectory if previous else "ACTIVE",
+            confidence=previous.confidence if previous else 72,
+            reasoning_level="FAST",
+            summary=answer[:500],
+            answer=answer,
+            impact=previous.impact if previous else "Based on the evidence supplied in the current signal.",
+            evidence=[message.text],
+            options=[answer],
+            recommendation=previous.recommendation if previous else answer,
+            next_move=previous.next_move if previous else "Use the answer above as the next decision point and provide new evidence if the situation changes.",
+            why=previous.why if previous else "TAVRYX returned the best available answer after structured output recovery.",
+            state_delta="Answer recovered through the text-response path; situation state preserved.",
+            decision_revised=False,
+            revision_reason="",
+            observed=[message.text],
+            inferred=[],
+            recommended=[answer],
+            executed=[],
+            verified=[],
+            processing_ms=round((time.perf_counter() - started) * 1000),
+        )
 
-    def _fallback_result(self, message, previous, started):
-        """Fast deterministic degradation path for transient upstream AI failures."""
+    def _fallback_result(self, message, previous, started, requested_mode="analyze"):
+        """Deterministic final degradation: never expose RECOVERING to the user."""
         text = message.text.strip()
         value = text.lower()
         critical_terms = ("outage", "production", "http 500", "http 503", "payment", "database", "security", "breach", "data loss")
-        learning_terms = ("learn", "teach", "exam", "understand", "recursion", "explain")
+        learning_terms = ("learn", "teach", "exam", "understand", "recursion", "explain", "what is", "how does")
         decision_terms = ("choose", "compare", "decision", "prioritize", "strategy")
+
         if any(k in value for k in critical_terms):
             mode, severity, lifecycle = Mode.INCIDENT, "HIGH", Lifecycle.ACTIVE
             title = "Production situation requires immediate triage"
             trajectory = "ESCALATING"
-            next_move = "Validate the newest production evidence first, then address the highest customer-impacting failure."
+            answer = "The signal indicates a potentially material operational issue. First validate the newest production evidence, isolate the highest-impact failure, and verify the result after the corrective action."
         elif any(k in value for k in learning_terms):
             mode, severity, lifecycle = Mode.LEARNING, "LOW", Lifecycle.EMERGING
             title = "Learning request"
             trajectory = "EMERGING"
-            next_move = "Start with the simplest concept, verify understanding, then apply it to one small example."
+            answer = "The request is understood as a learning question. Start from the core concept, connect it to a simple example, then test the idea with one small application."
         elif any(k in value for k in decision_terms):
             mode, severity, lifecycle = Mode.DECISION, "MEDIUM", Lifecycle.EMERGING
             title = "Decision requires structured evaluation"
             trajectory = "EMERGING"
-            next_move = "Compare the available options against impact, risk, effort, and reversibility before committing."
+            answer = "Compare the available options on impact, risk, effort, reversibility, and fit with the objective before committing."
         else:
             mode, severity, lifecycle = Mode.GENERAL, "LOW", Lifecycle.EMERGING
             title = "Situation identified"
             trajectory = "EMERGING"
-            next_move = "Clarify the desired outcome and validate the most important evidence before acting."
+            answer = f"TAVRYX captured the signal: “{text[:260]}” The next step is to clarify the desired outcome and validate the most important evidence before acting."
 
         sid = previous.situation_id if previous and mode == previous.mode else "S-" + uuid.uuid4().hex[:8].upper()
         situation = Situation(
             situation_id=sid, title=title, mode=mode, lifecycle=lifecycle, severity=severity,
-            trajectory=trajectory, confidence=68, reasoning_level="FAST",
-            summary=text, answer=next_move, impact="Requires focused follow-up based on the evidence provided.",
-            evidence=[text], options=[next_move], recommendation=next_move, next_move=next_move,
-            why="Prioritize the highest-leverage action supported by the current evidence.",
-            state_delta="New signal captured; situation state established from the latest message.",
-            observed=[text], inferred=[], recommended=[next_move], executed=[], verified=[]
+            trajectory=trajectory, confidence=55, reasoning_level="FAST",
+            summary=text, answer=answer, impact="Based on the information currently available.",
+            evidence=[text], options=[answer], recommendation=answer,
+            next_move="Provide the next piece of evidence or constraint so TAVRYX can refine the situation.",
+            why="The response is a safe degradation path because the primary reasoning service was unavailable.",
+            state_delta="Signal captured; answer returned through the deterministic recovery path.",
+            observed=[text], inferred=[], recommended=[answer], executed=[], verified=[]
         )
         if previous and situation.situation_id == previous.situation_id:
             situation.state_delta = _state_delta(previous, situation, situation.state_delta)
@@ -244,6 +353,7 @@ class TavryxEngine:
         current.state_delta = _state_delta(previous, current, current.state_delta)
         return current
 
+
 def _related_enough(previous, current):
     a = f"{previous.title} {previous.summary}".lower()
     b = f"{current.title} {current.summary}".lower()
@@ -251,6 +361,7 @@ def _related_enough(previous, current):
         return True
     shared = {w for w in re.findall(r"[a-z0-9]{5,}", a) if w in b}
     return len(shared) >= 2
+
 
 def _state_delta(previous, current, model_delta=""):
     changes = []
@@ -264,6 +375,7 @@ def _state_delta(previous, current, model_delta=""):
         changes.append("next move changed")
     prefix = " • ".join(changes)
     return (prefix + (f" — {model_delta}" if model_delta else "")).strip(" —")
+
 
 def render_situation(s):
     lines = [
@@ -294,6 +406,7 @@ def render_situation(s):
         lines += ["**Decision revised**", s.revision_reason, ""]
     lines += ["──────────", f"**Lifecycle:** {s.lifecycle.value}", f"**Confidence:** {s.confidence}%"]
     return "\n".join(lines)
+
 
 def command_response(command, memory, argument=None):
     current = memory.latest()

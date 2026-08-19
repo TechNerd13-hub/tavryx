@@ -54,6 +54,7 @@ class IncomingMessage(BaseModel):
     sender: str = "unknown"
     channel: str = "api"
     message_id: str | None = None
+    mode: str | None = None
 
 class AgentResult(BaseModel):
     situation: Situation

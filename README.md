@@ -8,8 +8,8 @@ A message becomes a structured situation with a durable ID, lifecycle, trajector
 
 - **Gemini 3.6 Flash** for strong agentic reasoning.
 - **Adaptive thinking budget:** low for normal traffic, medium for complex/critical situations.
-- **Structured JSON output** validated with Pydantic.
-- **Bounded recovery retry** on model failures.
+- **Structured JSON output** validated with Pydantic, with a plain-text recovery path when structured generation fails.
+- **Multi-stage AI recovery**: structured JSON → plain-text Gemini → fallback Gemini → deterministic answer.
 - **Graceful Discord/email failure message** that never exposes stack traces.
 - **Persistent SQLite situation memory.**
 - **Situation portfolio selection:** new signals can resume older relevant situations instead of being forced into the globally latest thread.
@@ -101,3 +101,17 @@ Render is configured in `render.yaml`. Add `GEMINI_API_KEY` and `CASPIAN_API_KEY
 ## Security
 
 Never commit `.env` or API keys. TAVRYX never treats model text as permission to execute arbitrary external actions. Any future side-effecting tools should be explicit allowlisted functions with authentication, audit logging and human approval where appropriate.
+
+
+## Analysis reliability
+
+The `/api/analyze` path is intentionally designed so a temporary model/schema failure does not become a blank `RECOVERING` state:
+
+1. Gemini 3.6 Flash structured JSON generation.
+2. Plain-text Gemini recovery using the same situation context.
+3. Optional Gemini 3.5 Flash fallback model.
+4. Deterministic local answer as the final degradation path.
+
+The dashboard also sends the selected lens (`analyze`, `focus`, `brief`, `why`, `timeline`, or `state`) so each control requests a different view of the same situation.
+
+Gemini 3.6 Flash is the configured stable production model. See Google's current Gemini model documentation for the supported model IDs and thinking controls.
